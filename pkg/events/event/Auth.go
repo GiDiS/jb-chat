@@ -28,6 +28,10 @@ type AuthSignOutResponse struct {
 	ResultStatus
 }
 
+func (r *AuthSignInResponse) SetToken(token string) {
+	r.Token = token
+}
+
 type AuthMeResponse struct {
 	ResultStatus
 	Me *models.UserInfo `json:"me,omitempty"`

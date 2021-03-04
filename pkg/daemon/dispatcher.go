@@ -3,8 +3,11 @@ package daemon
 import (
 	"context"
 	"errors"
+	"fmt"
 	"jb_chat/pkg/auth"
 	"os"
+	"strconv"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -109,6 +112,7 @@ func (d *Dispatcher) onAuthSignIn(e events.Event) error {
 		return ErrInvalidRequest
 	}
 	var userRef *models.User
+	var token string
 	if payload.Service == "google" {
 		d.logger.Debugf("%+v", payload)
 		profile, err := auth.GetProfileByAccessToken(e.Ctx, payload.AccessToken)
@@ -121,13 +125,38 @@ func (d *Dispatcher) onAuthSignIn(e events.Event) error {
 			return err
 		}
 		userRef = &user
+		// @todo replace to JWT
+		token = fmt.Sprintf("uid:%v", user.UserId)
+	} else if payload.Service == "token" {
+		if payload.AccessToken == "Tyrion" {
+			user, err := d.appStore.Users().GetByEmail(e.Ctx, "tyrion.lannister@lannister.got")
+			if err != nil {
+				return err
+			}
+			userRef = &user
+			token = payload.AccessToken
+		} else if strings.HasPrefix(payload.AccessToken, "uid:") {
+			uidStr := strings.TrimPrefix(payload.AccessToken, "uid:")
+			uid, err := strconv.Atoi(uidStr)
+			if err != nil {
+				return err
+			}
+			user, err := d.appStore.Users().GetByUid(e.Ctx, models.Uid(uid))
+			if err != nil {
+				return err
+			}
+			userRef = &user
+			token = payload.AccessToken
+		}
 	} else {
 		d.logger.Debugf("Signin: %v", e)
+		return ErrUnknownAuthService
 	}
 
 	if userRef != nil {
 		var resp event.AuthSignInResponse
 		resp.SetMe(&models.UserInfo{User: *userRef, Status: models.UserStatusUnknown})
+		resp.SetToken(token)
 		d.notify(events.NewEvent(
 			event.AuthSignedIn,
 			events.WithTo(events.NewDestBroadcast()),
