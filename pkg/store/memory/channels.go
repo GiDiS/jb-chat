@@ -255,12 +255,12 @@ func (s *channelsMemoryStore) Leave(ctx context.Context, cid models.ChannelId, u
 
 	if isMember, err := s.isMember(ctx, cid, uid); err != nil {
 		return err
-	} else if isMember {
-		return store.ErrUserAlreadyJoined
+	} else if !isMember {
+		return store.ErrUserAlreadyLeave
 	}
 
-	s.members[cid][uid] = false
-	s.usersChannels[uid][cid] = false
+	delete(s.members[cid], uid)
+	delete(s.usersChannels[uid], cid)
 
 	return nil
 }

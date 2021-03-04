@@ -61,6 +61,11 @@ func (d *Dispatcher) init() {
 
 	d.dispatcher.On(event.ChannelsGetList, d.onChannelsGetList)
 	d.dispatcher.On(event.ChannelsGetMembers, d.onChannelsGetMembers)
+	d.dispatcher.On(event.ChannelsCreate, d.onChannelsCreate)
+	d.dispatcher.On(event.ChannelsDelete, d.onChannelsDelete)
+	d.dispatcher.On(event.ChannelsJoin, d.onChannelsJoin)
+	d.dispatcher.On(event.ChannelsLeave, d.onChannelsLeave)
+
 	d.dispatcher.On(event.UsersGetList, d.onUsersGetList)
 	d.dispatcher.On(event.MessageGetList, d.onMessagesGetList)
 }
@@ -215,6 +220,109 @@ func (d *Dispatcher) onChannelsGetMembers(e events.Event) error {
 	payload.SetMembers(members)
 	d.notify(events.NewEvent(
 		event.ChannelsMembers,
+		events.WithTo(e.From),
+		events.WithPayload(payload),
+		events.WithPrev(&e)),
+	)
+	return nil
+}
+
+func (d *Dispatcher) onChannelsCreate(e events.Event) error {
+	request, ok := e.Payload.(event.ChannelsCreateRequest)
+	if e.Type != event.ChannelsCreate || !ok {
+		return ErrInvalidRequest
+	}
+
+	cid, err := d.appStore.Channels().CreatePublic(e.Ctx, models.NoUser, request.Title)
+	if err != nil {
+		return err
+	}
+	channel, err := d.appStore.Channels().Get(e.Ctx, cid)
+	payload := event.ChannelsOneResult{}
+	payload.SetChannel(&channel)
+	d.notify(events.NewEvent(
+		event.ChannelsCreated,
+		events.WithTo(e.From),
+		events.WithPayload(payload),
+		events.WithPrev(&e)),
+	)
+	return nil
+}
+
+func (d *Dispatcher) onChannelsDelete(e events.Event) error {
+	request, ok := e.Payload.(event.ChannelsDeleteRequest)
+	if e.Type != event.ChannelsDelete || !ok {
+		return ErrInvalidRequest
+	}
+	if err := request.ChannelId.Validate(); err != nil {
+		return err
+	}
+
+	err := d.appStore.Channels().Delete(e.Ctx, request.ChannelId)
+	if err != nil {
+		return err
+	}
+	payload := event.ChannelsOneResult{}
+	payload.ChannelId = request.ChannelId
+	payload.SetSuccess("ok")
+	d.notify(events.NewEvent(
+		event.ChannelsDeleted,
+		events.WithTo(e.From),
+		events.WithPayload(payload),
+		events.WithPrev(&e)),
+	)
+	return nil
+}
+
+func (d *Dispatcher) onChannelsJoin(e events.Event) error {
+	request, ok := e.Payload.(event.ChannelsJoinRequest)
+	if e.Type != event.ChannelsJoin || !ok {
+		return ErrInvalidRequest
+	}
+	if err := request.ChannelId.Validate(); err != nil {
+		return err
+	}
+
+	err := d.appStore.Members().Join(e.Ctx, request.ChannelId, request.UserId)
+	if err != nil {
+		return err
+	}
+	channel, err := d.appStore.Channels().Get(e.Ctx, request.ChannelId)
+	if err != nil {
+		return err
+	}
+	payload := event.ChannelsOneResult{}
+	payload.SetChannel(&channel)
+	d.notify(events.NewEvent(
+		event.ChannelsJoined,
+		events.WithTo(e.From),
+		events.WithPayload(payload),
+		events.WithPrev(&e)),
+	)
+	return nil
+}
+
+func (d *Dispatcher) onChannelsLeave(e events.Event) error {
+	request, ok := e.Payload.(event.ChannelsLeaveRequest)
+	if e.Type != event.ChannelsLeave || !ok {
+		return ErrInvalidRequest
+	}
+	if err := request.ChannelId.Validate(); err != nil {
+		return err
+	}
+
+	err := d.appStore.Members().Leave(e.Ctx, request.ChannelId, request.UserId)
+	if err != nil {
+		return err
+	}
+	channel, err := d.appStore.Channels().Get(e.Ctx, request.ChannelId)
+	if err != nil {
+		return err
+	}
+	payload := event.ChannelsOneResult{}
+	payload.SetChannel(&channel)
+	d.notify(events.NewEvent(
+		event.ChannelsLeft,
 		events.WithTo(e.From),
 		events.WithPayload(payload),
 		events.WithPrev(&e)),

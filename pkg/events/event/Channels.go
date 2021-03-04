@@ -6,12 +6,18 @@ import (
 
 type ChannelsOneResult struct {
 	ResultStatus
-	Channel *models.Channel `json:"channel,omitempty"`
+	Channel   *models.Channel  `json:"channel,omitempty"`
+	ChannelId models.ChannelId `json:"cid"`
 }
 
 func (r *ChannelsOneResult) SetChannel(channel *models.Channel) {
 	r.Ok = true
 	r.Channel = channel
+	if channel != nil {
+		r.ChannelId = channel.Cid
+	} else {
+		r.ChannelId = models.NoChannel
+	}
 }
 
 type ChannelsCreateRequest struct {
@@ -30,15 +36,17 @@ type ChannelsDeleteRequest struct {
 
 type ChannelsJoinRequest struct {
 	ChannelId models.ChannelId `json:"cid"`
+	UserId    models.Uid       `json:"uid"`
 }
 
 type ChannelsLeaveRequest struct {
 	ChannelId models.ChannelId `json:"cid"`
+	UserId    models.Uid       `json:"uid"`
 }
 
 type ChannelsKickRequest struct {
 	ChannelId models.ChannelId `json:"cid"`
-	UserId    models.ChannelId `json:"uid"`
+	UserId    models.Uid       `json:"uid"`
 }
 
 type ChannelsGetListRequest struct {
