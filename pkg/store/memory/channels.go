@@ -2,8 +2,9 @@ package memory
 
 import (
 	"context"
-	"jb-chat/pkg/models"
-	"jb-chat/pkg/store"
+	"jb_chat/pkg/models"
+	"jb_chat/pkg/store"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -62,7 +63,7 @@ func (s *channelsMemoryStore) CreatePublic(ctx context.Context, authorUid models
 		Type:         models.ChannelTypePublic,
 	}
 
-	if err := s.Join(ctx, cid, authorUid); err != nil {
+	if err := s.join(ctx, cid, authorUid); err != nil {
 		return 0, err
 	}
 
@@ -112,6 +113,11 @@ func (s *channelsMemoryStore) Find(_ context.Context, filter store.ChannelsSearc
 			}
 		}
 	}
+
+	sort.Slice(filtered, func(i, j int) bool {
+		return strings.Compare(filtered[i].Title, filtered[j].Title) < 0
+	})
+
 	return filtered, nil
 }
 
@@ -221,7 +227,10 @@ func (s *channelsMemoryStore) isMember(_ context.Context, cid models.ChannelId, 
 func (s *channelsMemoryStore) Join(ctx context.Context, cid models.ChannelId, uid models.Uid) error {
 	s.rwMx.Lock()
 	defer s.rwMx.Unlock()
+	return s.join(ctx, cid, uid)
+}
 
+func (s *channelsMemoryStore) join(ctx context.Context, cid models.ChannelId, uid models.Uid) error {
 	if isMember, err := s.isMember(ctx, cid, uid); err != nil {
 		return err
 	} else if isMember {

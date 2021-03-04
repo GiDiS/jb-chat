@@ -2,7 +2,7 @@ package store
 
 import (
 	"context"
-	"jb-chat/pkg/models"
+	"jb_chat/pkg/models"
 )
 
 type ChannelsStore interface {

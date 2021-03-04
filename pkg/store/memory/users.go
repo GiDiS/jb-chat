@@ -2,8 +2,9 @@ package memory
 
 import (
 	"context"
-	"jb-chat/pkg/models"
-	"jb-chat/pkg/store"
+	"jb_chat/pkg/models"
+	"jb_chat/pkg/store"
+	"sort"
 	"sync"
 )
 
@@ -25,16 +26,20 @@ func (s *usersMemoryStore) Register(ctx context.Context, user models.User) (mode
 	s.rwMx.Lock()
 	defer s.rwMx.Unlock()
 
-	existed, err := s.getByEmail(ctx, user.Email)
-	if err == nil {
-		return existed.Uid, store.ErrUserAlreadyRegistered
-	} else if err != store.ErrUserNotFound {
-		return models.NoUser, err
+	return s.register(ctx, user)
+
+}
+
+func (s *usersMemoryStore) Save(ctx context.Context, user models.User) (models.Uid, error) {
+	s.rwMx.Lock()
+	defer s.rwMx.Unlock()
+
+	if user.UserId > 0 {
+		s.users[user.UserId] = user
+		return user.UserId, nil
+	} else {
+		return s.register(ctx, user)
 	}
-	s.lastUid++
-	user.Uid = s.lastUid
-	s.users[user.Uid] = user
-	return user.Uid, nil
 }
 
 func (s *usersMemoryStore) SetStatus(_ context.Context, uid models.Uid, status models.UserStatus) error {
@@ -96,22 +101,51 @@ func (s *usersMemoryStore) Estimate(_ context.Context, filter store.UserSearchCr
 	return matched, nil
 }
 
+func (s *usersMemoryStore) register(ctx context.Context, user models.User) (models.Uid, error) {
+	existed, err := s.getByEmail(ctx, user.Email)
+	if err == nil {
+		return existed.UserId, store.ErrUserAlreadyRegistered
+	} else if err != store.ErrUserNotFound {
+		return models.NoUser, err
+	}
+
+	user.UserId = s.getNextUid()
+	s.users[user.UserId] = user
+	return user.UserId, nil
+}
+
+func (s *usersMemoryStore) getNextUid() models.Uid {
+	lastUid := models.NoUser
+	for _, u := range s.users {
+		if lastUid < u.UserId {
+			lastUid = u.UserId
+		}
+	}
+	return lastUid + 1
+}
+
 func (s *usersMemoryStore) find(_ context.Context, filter store.UserSearchCriteria) ([]models.User, error) {
 	filtered := make([]models.User, 0)
 	offset, limit, skipped := filter.Limits.Offset, filter.Limits.Limit, 0
 	for _, user := range s.users {
-		if s.matchUser(&user, filter) {
-			if offset > 0 && skipped < offset {
-				skipped++
-				continue
-			}
-			filtered = append(filtered, user)
+		if !s.matchUser(&user, filter) {
+			continue
+		}
+		if offset > 0 && skipped < offset {
+			skipped++
+			continue
+		}
+		filtered = append(filtered, user)
 
-			if limit > 0 && len(filtered) >= limit {
-				break
-			}
+		if limit > 0 && len(filtered) >= limit {
+			break
 		}
 	}
+
+	sort.Slice(filtered, func(i, j int) bool {
+		return filtered[i].Title < filtered[j].Title
+	})
+
 	return filtered, nil
 }
 
@@ -131,10 +165,14 @@ func (s *usersMemoryStore) matchUser(user *models.User, filter store.UserSearchC
 		return false
 	}
 
+	if filter.WithAvatars && user.AvatarUrl == "" {
+		return false
+	}
+
 	if len(filter.Uids) > 0 {
 		matched := false
 		for _, fUid := range filter.Uids {
-			if fUid != user.Uid {
+			if fUid == user.UserId {
 				matched = true
 				break
 			}
@@ -147,7 +185,7 @@ func (s *usersMemoryStore) matchUser(user *models.User, filter store.UserSearchC
 	if len(filter.Emails) > 0 {
 		matched := false
 		for _, fEmail := range filter.Emails {
-			if fEmail != user.Email {
+			if fEmail == user.Email {
 				matched = true
 				break
 			}
@@ -160,8 +198,8 @@ func (s *usersMemoryStore) matchUser(user *models.User, filter store.UserSearchC
 	if len(filter.Statuses) > 0 {
 		matched := false
 		status := models.UserStatusUnknown
-		if _, ok := s.usersStatus[user.Uid]; ok {
-			status = s.usersStatus[user.Uid]
+		if _, ok := s.usersStatus[user.UserId]; ok {
+			status = s.usersStatus[user.UserId]
 		}
 
 		for _, fStatus := range filter.Statuses {

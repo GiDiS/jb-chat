@@ -11,3 +11,12 @@ type GoogleProfile struct {
 	EmailVerified bool   `json:"email_verified"`
 	Gender        string `json:"gender"`
 }
+
+func (gp GoogleProfile) ToUser() User {
+	return User{
+		Title:     gp.Name,
+		Email:     gp.Email,
+		AvatarUrl: gp.Picture,
+		Nickname:  gp.Email,
+	}
+}

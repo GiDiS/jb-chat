@@ -2,11 +2,12 @@ package store
 
 import (
 	"context"
-	"jb-chat/pkg/models"
+	"jb_chat/pkg/models"
 )
 
 type UsersStore interface {
 	Register(context.Context, models.User) (models.Uid, error)
+	Save(context.Context, models.User) (models.Uid, error)
 	SetStatus(context.Context, models.Uid, models.UserStatus) error
 	GetByEmail(context.Context, string) (models.User, error)
 	GetByUid(context.Context, models.Uid) (models.User, error)
@@ -15,8 +16,9 @@ type UsersStore interface {
 }
 
 type UserSearchCriteria struct {
-	Uids     []models.Uid        `json:"uids,omitempty"`
-	Emails   []string            `json:"emails,omitempty"`
-	Statuses []models.UserStatus `json:"statuses,omitempty"`
-	Limits   models.Limits       `json:"limits,omitempty"`
+	Uids        []models.Uid        `json:"uids,omitempty"`
+	Emails      []string            `json:"emails,omitempty"`
+	Statuses    []models.UserStatus `json:"statuses,omitempty"`
+	WithAvatars bool                `json:"with_avatars,omitempty"`
+	Limits      models.Limits       `json:"limits,omitempty"`
 }

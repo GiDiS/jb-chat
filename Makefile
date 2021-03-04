@@ -5,7 +5,7 @@ OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 PWD:=$(shell pwd)
 
 UI_PORT:=3000
-NODE_IMAGE=node:8-alpine
+NODE_IMAGE=node:lts-alpine
 
 GIT_COMMIT := $(shell git rev-parse --short=7 HEAD)
 
@@ -29,7 +29,7 @@ prepare:
 
 clean:
 	@echo "Clean ... "
-	@rm -f ${BUILDDIR}/jb-chat
+	@rm -f ${BUILDDIR}/jb_chat
 
 deps:
 	@echo "Setting up the vendors folder... ${GOPATH}"
@@ -56,24 +56,27 @@ benchmark:
 build-jb:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  \
 		-ldflags='-X "main.RELEASE=${RELEASE}" -X "main.COMMIT=${GITHASH}" -X "main.BUILDDATE=${BUILDDATE}"' \
-		-o ${BUILDDIR}/jb-chat ./cmd/
+		-o ${BUILDDIR}/jb_chat ./cmd/
 
 build: build-jb
 
 run:
+	go generate ./...
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go run  \
     		-ldflags='-X "main.RELEASE=${RELEASE}" -X "main.COMMIT=${GITHASH}" -X "main.BUILDDATE=${BUILDDATE}"' \
     		./cmd/
 
 ui-docker-run:
-	docker run --publish '3000:3000' --rm --name l3-ui-run --volume "${PWD}/ui:/ui" \
+	docker run --publish '3000:3000' --rm --name jb-ui-run --volume "${PWD}/ui:/ui" \
+			--env 'API_SERVER=http://localhost:8888' \
 			--volume "${PWD}/ui/node_modules/:/root/.npm/" \
 			--workdir "/ui/" \
 			"${NODE_IMAGE}" \
 			sh -c 'npm run start'
 
 ui-docker-build:
-	docker run --rm --name l3-ui-build --volume "${PWD}/ui:/ui" \
+	docker run --rm --name jb-ui-build --volume "${PWD}/ui:/ui" \
+			--env 'NODE_ENV=production' \
 			--volume "${PWD}/ui/node_modules/:/root/.npm/" \
 			--workdir "/ui/" \
 			"${NODE_IMAGE}" \

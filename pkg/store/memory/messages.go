@@ -2,8 +2,9 @@ package memory
 
 import (
 	"context"
-	"jb-chat/pkg/models"
-	"jb-chat/pkg/store"
+	"jb_chat/pkg/models"
+	"jb_chat/pkg/store"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -95,18 +96,27 @@ func (s *messagesMemoryStore) Find(_ context.Context, filter store.MessagesSearc
 	filtered := make([]models.Message, 0)
 	offset, limit, skipped := filter.Limits.Offset, filter.Limits.Limit, 0
 	for _, msg := range s.messages {
-		if s.matchMessage(&msg, filter) {
-			if offset > 0 && skipped < offset {
-				skipped++
-				continue
-			}
-			filtered = append(filtered, msg)
-
-			if limit > 0 && len(filtered) >= limit {
-				break
-			}
+		if !s.matchMessage(&msg, filter) {
+			continue
 		}
+
+		if offset > 0 && skipped < offset {
+			skipped++
+			continue
+		}
+		filtered = append(filtered, msg)
+
+		if limit > 0 && len(filtered) >= limit {
+			break
+		}
+
 	}
+
+	sort.Slice(filtered, func(i, j int) bool {
+		return filtered[i].Created.Before(filtered[j].Created)
+
+	})
+
 	return filtered, nil
 }
 

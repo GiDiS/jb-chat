@@ -1,0 +1,29 @@
+@startuml
+
+class User {
+    UserStatus status
+}
+class Channel {
+    Messages[] messages
+    User[] members
+}
+class Message {
+    Uid uid
+    Parent Message
+    Created
+}
+
+Channel -> User
+Channel -> Message
+Message -> Message
+Message -> User
+
+
+enum UserStatus {
+    Unknown
+    Online
+    Offline
+    Away
+}
+
+@enduml
