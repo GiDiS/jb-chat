@@ -53,3 +53,8 @@ func (r *MessageListResponse) SetResult(msgs []models.Message, users []models.Us
 		}
 	}
 }
+
+func (r *MessageOneResult) SetMsg(msg *models.Message) {
+	r.Msg = msg
+	r.Ok = true
+}

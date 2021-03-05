@@ -67,7 +67,9 @@ func (d *Dispatcher) init() {
 	d.dispatcher.On(event.ChannelsLeave, d.onChannelsLeave)
 
 	d.dispatcher.On(event.UsersGetList, d.onUsersGetList)
+
 	d.dispatcher.On(event.MessageGetList, d.onMessagesGetList)
+	d.dispatcher.On(event.MessageCreate, d.onMessageCreate)
 }
 
 func (d *Dispatcher) onPing(e events.Event) error {
@@ -379,6 +381,41 @@ func (d *Dispatcher) onMessagesGetList(e events.Event) error {
 
 	d.notify(events.NewEvent(
 		event.MessageList,
+		events.WithTo(e.From),
+		events.WithPayload(payload),
+		events.WithPrev(&e)),
+	)
+	return nil
+}
+
+func (d *Dispatcher) onMessageCreate(e events.Event) error {
+	request, ok := e.Payload.(event.MessageCreateRequest)
+	if e.Type != event.MessageCreate || !ok {
+		return ErrInvalidRequest
+	}
+	if err := request.ChannelId.Validate(); err != nil {
+		return err
+	}
+
+	msg := models.Message{
+		ChannelId: request.ChannelId, UserId: request.UserId, Body: request.Body,
+	}
+	if request.ParentId != nil {
+		msg.ParentId = *request.ParentId
+	}
+	mid, err := d.appStore.Messages().Create(e.Ctx, msg)
+	if err != nil {
+		return err
+	}
+	msg, err = d.appStore.Messages().Get(e.Ctx, mid)
+	if err != nil {
+		return err
+	}
+
+	payload := event.MessageOneResult{}
+	payload.SetMsg(&msg)
+	d.notify(events.NewEvent(
+		event.MessageCreated,
 		events.WithTo(e.From),
 		events.WithPayload(payload),
 		events.WithPrev(&e)),
