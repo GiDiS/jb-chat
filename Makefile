@@ -56,7 +56,7 @@ benchmark:
 build-jb:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  \
 		-ldflags='-X "main.RELEASE=${RELEASE}" -X "main.COMMIT=${GITHASH}" -X "main.BUILDDATE=${BUILDDATE}"' \
-		-o ${BUILDDIR}/jb_chat ./cmd/
+		-o ${BUILDDIR}/jb-chat ./cmd/chatd/main.go
 
 build: build-jb
 
