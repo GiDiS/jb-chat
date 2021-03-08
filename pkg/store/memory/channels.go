@@ -33,21 +33,34 @@ func (s *channelsMemoryStore) CreateDirect(ctx context.Context, uidA models.Uid,
 	cid := s.lastCid
 	s.channels[cid] = models.Channel{
 		Cid:          cid,
-		Title:        "",
+		Title:        models.DirectTitle(uidA, uidB),
 		LastMsg:      models.NoMessage,
 		MembersCount: 1,
 		Type:         models.ChannelTypeDirect,
 	}
 
-	if err := s.Join(ctx, cid, uidA); err != nil {
+	if err := s.join(ctx, cid, uidA); err != nil {
 		return 0, err
 	}
-
-	if err := s.Join(ctx, cid, uidB); err != nil {
+	if err := s.join(ctx, cid, uidB); err != nil {
 		return 0, err
 	}
 
 	return cid, nil
+}
+
+func (s *channelsMemoryStore) GetDirect(ctx context.Context, uidA models.Uid, uidB models.Uid) (models.ChannelId, error) {
+	channels, err := s.Find(ctx, store.ChannelsSearchCriteria{
+		Type:  models.ChannelTypeDirect,
+		Title: models.DirectTitle(uidA, uidB),
+	})
+	if err != nil {
+		return models.NoChannel, err
+	}
+	if len(channels) > 0 {
+		return channels[0].Cid, nil
+	}
+	return models.NoChannel, nil
 }
 
 func (s *channelsMemoryStore) CreatePublic(ctx context.Context, authorUid models.Uid, title string) (models.ChannelId, error) {
@@ -170,6 +183,9 @@ func (s *channelsMemoryStore) channelMatch(ch *models.Channel, filter store.Chan
 	}
 
 	if filter.Title != "" && !strings.Contains(ch.Title, filter.Title) {
+		return false
+	}
+	if filter.Type != models.ChannelTypeUnknown && filter.Type != ch.Type {
 		return false
 	}
 

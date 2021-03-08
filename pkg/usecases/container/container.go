@@ -1,7 +1,8 @@
-package daemon
+package container
 
 import (
 	"context"
+	"jb_chat/pkg/config"
 	"jb_chat/pkg/events"
 	"jb_chat/pkg/handlers_ws"
 	"jb_chat/pkg/logger"
@@ -11,8 +12,9 @@ import (
 )
 
 type Container struct {
-	Config           Config
+	Config           config.Config
 	logger           logger.Logger
+	Logger           logger.Logger
 	Store            store.AppStore
 	WsTransport      handlers_ws.WsApi
 	AppDispatcher    *Dispatcher
@@ -20,10 +22,10 @@ type Container struct {
 	EventsResolver   events.Resolver
 }
 
-func MustContainer(cfg Config, defaultLogger logger.Logger) *Container {
+func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
 
 	c := Container{
-		logger:         defaultLogger,
+		Logger:         defaultLogger,
 		Config:         cfg,
 		EventsResolver: events.DefaultResolver,
 	}
@@ -32,9 +34,9 @@ func MustContainer(cfg Config, defaultLogger logger.Logger) *Container {
 
 	_, _ = seed.MakeSeeder(context.Background(), c.Store)
 
-	c.WsTransport = handlers_ws.NewWsTransport(c.EventsResolver, c.logger)
+	c.WsTransport = handlers_ws.NewWsTransport(c.EventsResolver, c.Logger)
 
-	c.EventsDispatcher = events.NewDispatcher(c.logger)
+	c.EventsDispatcher = events.NewDispatcher(c.Logger)
 	c.EventsDispatcher.AddTransport(c.WsTransport, true)
 
 	c.AppDispatcher = NewDispatcher(c)

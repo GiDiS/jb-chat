@@ -1,11 +1,13 @@
-package event
+package channels
 
 import (
+	"jb_chat/pkg/events"
 	"jb_chat/pkg/models"
+	"jb_chat/pkg/store"
 )
 
 type ChannelsOneResult struct {
-	ResultStatus
+	events.ResultStatus
 	Channel   *models.Channel  `json:"channel,omitempty"`
 	ChannelId models.ChannelId `json:"cid"`
 }
@@ -50,10 +52,11 @@ type ChannelsKickRequest struct {
 }
 
 type ChannelsGetListRequest struct {
+	store.ChannelsSearchCriteria
 }
 
 type ChannelsListResponse struct {
-	ResultStatus
+	events.ResultStatus
 	Channels []models.Channel `json:"channels"`
 }
 
@@ -62,7 +65,7 @@ type ChannelsMembersRequest struct {
 }
 
 type ChannelsMembersResponse struct {
-	ResultStatus
+	events.ResultStatus
 	Members []models.Uid `json:"members"`
 }
 
@@ -71,7 +74,8 @@ type ChannelsGetInfoRequest struct {
 }
 
 type ChannelsGetDirectRequest struct {
-	DirectUserId models.Uid `json:"uid"`
+	UserId   models.Uid `json:"uid"`
+	Nickname string     `json:"nickname"`
 }
 
 func (l *ChannelsListResponse) SetChannels(channels []models.Channel) {

@@ -182,6 +182,19 @@ func (s *usersMemoryStore) matchUser(user *models.User, filter store.UserSearchC
 		}
 	}
 
+	if len(filter.Nicknames) > 0 {
+		matched := false
+		for _, fNickname := range filter.Nicknames {
+			if fNickname == user.Nickname {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
 	if len(filter.Emails) > 0 {
 		matched := false
 		for _, fEmail := range filter.Emails {

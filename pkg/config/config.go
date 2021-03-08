@@ -1,4 +1,4 @@
-package daemon
+package config
 
 type Config struct {
 	PublicPort int

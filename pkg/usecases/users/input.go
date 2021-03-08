@@ -1,14 +1,17 @@
-package event
+package users
 
 import (
+	"jb_chat/pkg/events"
 	"jb_chat/pkg/models"
+	"jb_chat/pkg/store"
 )
 
 type UsersListRequest struct {
+	store.UserSearchCriteria
 }
 
 type UsersListResponse struct {
-	ResultStatus
+	events.ResultStatus
 	Users []models.UserInfo `json:"users"`
 }
 
@@ -22,7 +25,7 @@ type UsersInfoRequest struct {
 }
 
 type UsersInfoResponse struct {
-	ResultStatus
+	events.ResultStatus
 	User models.UserInfo `json:"user"`
 }
 

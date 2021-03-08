@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
+	"jb_chat/pkg/config"
 	"jb_chat/pkg/handlers_http/diag"
 	"jb_chat/pkg/handlers_http/public"
 	"jb_chat/pkg/logger"
+	"jb_chat/pkg/usecases/container"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,15 +20,15 @@ import (
 const AppName = "jb_chat"
 
 type App struct {
-	config    Config
-	Container *Container
+	config    config.Config
+	Container *container.Container
 	logger    logger.Logger
 }
 
-func NewApp(cfg Config, log logger.Logger) *App {
+func NewApp(cfg config.Config, log logger.Logger) *App {
 	return &App{
 		config:    cfg,
-		Container: MustContainer(cfg, log),
+		Container: container.MustContainer(cfg, log),
 		logger:    log,
 	}
 }

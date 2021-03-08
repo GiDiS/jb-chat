@@ -7,6 +7,7 @@ import (
 
 type ChannelsStore interface {
 	CreateDirect(context.Context, models.Uid, models.Uid) (models.ChannelId, error)
+	GetDirect(context.Context, models.Uid, models.Uid) (models.ChannelId, error)
 	CreatePublic(context.Context, models.Uid, string) (models.ChannelId, error)
 	Delete(context.Context, models.ChannelId) error
 	Get(context.Context, models.ChannelId) (models.Channel, error)
@@ -25,5 +26,6 @@ type ChannelsSearchCriteria struct {
 	ChannelIds []models.ChannelId `json:"channel_ids,omitempty"`
 	HasMember  models.Uid         `json:"has_members,omitempty"`
 	Title      string             `json:"title,omitempty"`
+	Type       models.ChannelType `json:"type,omitempty"`
 	Limits     models.Limits      `json:"limits,omitempty"`
 }

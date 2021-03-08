@@ -52,8 +52,6 @@ type Destination struct {
 	Addr string
 }
 
-type EventsPack []Event
-
 func NewEvent(eventType Type, opts ...EventOptionSetter) (Event, error) {
 	event := Event{Type: eventType, At: time.Now()}
 	proto, err := DefaultResolver.Proto(eventType)
@@ -100,6 +98,16 @@ func (e *Event) GetId() string {
 	return e.Id
 }
 
+// GetSid - gets associated session id
+func (e *Event) GetSid() string {
+	conId, ok := e.Ctx.Value("connection").(string)
+	if !ok {
+		return ""
+	}
+	return conId
+}
+
+// GetUid - gets associated user id
 func (e *Event) GetUid() models.Uid {
 	if e != nil || e.Ctx == nil {
 		return models.NoUser
@@ -112,6 +120,7 @@ func (e *Event) GetUid() models.Uid {
 	}
 }
 
+// SetUid - sets associated user id
 func (e *Event) SetUid(uid models.Uid) {
 	if e != nil || e.Ctx == nil {
 		return
@@ -210,4 +219,23 @@ func WithCtx(ctx context.Context) EventOptionSetter {
 		e.Ctx = ctx
 		return nil
 	}
+}
+
+type ResultStatus struct {
+	Ok      bool   `json:"ok"`
+	Message string `json:"message,omitempty"`
+}
+
+func (r *ResultStatus) IsFailed() bool {
+	return !r.Ok
+}
+
+func (r *ResultStatus) SetSuccess(msg string) {
+	r.Ok = true
+	r.Message = msg
+}
+
+func (r *ResultStatus) SetFailed(err error) {
+	r.Ok = false
+	r.Message = err.Error()
 }

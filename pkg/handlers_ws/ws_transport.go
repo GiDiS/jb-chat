@@ -125,7 +125,7 @@ func (a *wsTransport) upgradeAndRun() func(w http.ResponseWriter, r *http.Reques
 			a.logger.WithError(err).Errorf("Upgrade failed: %+v", err)
 			return
 		}
-		client := NewWsClient(a, conn)
+		client := NewWsClient(a, conn, a.logger)
 		client.Serve(r.Context())
 		hostname, err := os.Hostname()
 		if err != nil {
@@ -147,25 +147,35 @@ func (a *wsTransport) onConnect(client *WsClient) {
 	a.clients[client] = client.GetId()
 	a.connections[client.GetId()] = client
 	a.logger.Debugf("Connected: %s", client.GetId())
+	if ev, err := NewClientEvent(WsConnected, client); err != nil {
+		a.logger.Errorf("New connected event failed: %v", err)
+	} else if ev != nil {
+		a.onEmit(*ev)
+	}
 }
 
 func (a *wsTransport) onDisconnect(client *WsClient) {
 	if _, ok := a.clients[client]; ok {
 		delete(a.clients, client)
 		delete(a.connections, client.GetId())
-		close(client.send)
-		client.send = nil
+
+		client.MarkDisconnected()
 		a.logger.Debugf("Disconnected: %s", client.GetId())
+		if ev, err := NewClientEvent(WsDisconnected, client); err != nil {
+			a.logger.Errorf("New connected event failed: %v", err)
+		} else if ev != nil {
+			a.onEmit(*ev)
+		}
 	}
 }
 
 func (a *wsTransport) onIncomeMsg(msg WsIncomeMsg) {
-	a.logger.Debugf("Recv: %+v", msg)
+	a.logger.Debugf("Recv: %+v", string(msg.msg))
 	if recvEvent, err := a.unmarshalEvent(msg); err != nil {
 		// send error msg back
 		_ = msg.client.conn.WriteJSON(recvEvent)
 	} else {
-		a.logger.Debugf("Recv event: %+v", recvEvent)
+		//a.logger.Debugf("Recv event: %+v", recvEvent)
 		a.onEmit(recvEvent)
 	}
 }
@@ -208,6 +218,8 @@ func (a *wsTransport) onDirect(client *WsClient, event events.Event) {
 	if err != nil {
 		return
 	}
+
+	a.logger.Debugf("Send: %+v", string(msg.msg))
 	client.send <- msg.msg
 }
 

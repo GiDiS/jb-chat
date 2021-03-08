@@ -1,6 +1,7 @@
-package event
+package messages
 
 import (
+	"jb_chat/pkg/events"
 	"jb_chat/pkg/models"
 )
 
@@ -10,7 +11,7 @@ type MessageRef struct {
 }
 
 type MessageOneResult struct {
-	ResultStatus
+	events.ResultStatus
 	Msg  *models.Message  `json:"msg,omitempty"`
 	User *models.UserInfo `json:"user,omitempty"`
 }
@@ -36,7 +37,7 @@ type MessageListRequest struct {
 }
 
 type MessageListResponse struct {
-	ResultStatus
+	events.ResultStatus
 	Messages []models.Message               `json:"messages,omitempty"`
 	Users    map[models.Uid]models.UserInfo `json:"users,omitempty"`
 }

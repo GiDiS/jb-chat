@@ -17,6 +17,7 @@ type UsersStore interface {
 
 type UserSearchCriteria struct {
 	Uids        []models.Uid        `json:"uids,omitempty"`
+	Nicknames   []string            `json:"nicknames,omitempty"`
 	Emails      []string            `json:"emails,omitempty"`
 	Statuses    []models.UserStatus `json:"statuses,omitempty"`
 	WithAvatars bool                `json:"with_avatars,omitempty"`

@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -17,12 +18,12 @@ func (cid ChannelId) Validate() error {
 
 const NoChannel ChannelId = 0
 
-type ChannelType uint8
+type ChannelType string
 
 const (
-	ChannelTypeUnknown ChannelType = iota
-	ChannelTypeDirect
-	ChannelTypePublic
+	ChannelTypeUnknown ChannelType = ""
+	ChannelTypeDirect  ChannelType = "direct"
+	ChannelTypePublic  ChannelType = "public"
 )
 
 type Channel struct {
@@ -41,4 +42,12 @@ type ChannelMembers struct {
 
 func (cid ChannelId) String() string {
 	return string(cid)
+}
+
+func DirectTitle(uidA, uidB Uid) string {
+	if uidA < uidB {
+		return fmt.Sprintf("@%d:%d", uidA, uidB)
+	} else {
+		return fmt.Sprintf("@%d:%d", uidB, uidA)
+	}
 }

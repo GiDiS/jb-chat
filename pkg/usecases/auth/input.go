@@ -1,6 +1,9 @@
-package event
+package auth
 
-import "jb_chat/pkg/models"
+import (
+	"jb_chat/pkg/events"
+	"jb_chat/pkg/models"
+)
 
 type AuthRegisterRequest struct {
 	Nickname  string `json:"nickname"`
@@ -25,7 +28,7 @@ type AuthSignInResponse struct {
 }
 
 type AuthSignOutResponse struct {
-	ResultStatus
+	events.ResultStatus
 }
 
 func (r *AuthSignInResponse) SetToken(token string) {
@@ -33,7 +36,7 @@ func (r *AuthSignInResponse) SetToken(token string) {
 }
 
 type AuthMeResponse struct {
-	ResultStatus
+	events.ResultStatus
 	Me *models.UserInfo `json:"me,omitempty"`
 }
 
