@@ -222,7 +222,7 @@ func (d *Dispatcher) onChannelsGetMembers(e events.Event) error {
 	if resp, err := d.channelsUc.GetMembers(e.Ctx, e.GetUid(), request); err != nil {
 		return err
 	} else {
-		d.broadcast(channelsUc.ChannelsMembers, e, resp)
+		d.reply(channelsUc.ChannelsMembers, e, resp)
 	}
 	return nil
 }
@@ -272,6 +272,7 @@ func (d *Dispatcher) onChannelsJoin(e events.Event) error {
 	} else {
 		d.reply(channelsUc.ChannelsJoined, e, resp)
 	}
+	d.replyChannelMembers(e.Ctx, e, request.ChannelId)
 	return nil
 }
 
@@ -284,11 +285,13 @@ func (d *Dispatcher) onChannelsLeave(e events.Event) error {
 		return err
 	}
 
-	if resp, err := d.channelsUc.Leave(e.Ctx, e.GetUid(), request); err != nil {
+	resp, err := d.channelsUc.Leave(e.Ctx, e.GetUid(), request)
+	if err != nil {
 		return err
 	} else {
 		d.reply(channelsUc.ChannelsLeft, e, resp)
 	}
+	d.replyChannelMembers(e.Ctx, e, request.ChannelId)
 	return nil
 }
 
@@ -381,6 +384,18 @@ func (d *Dispatcher) onMessageCreate(e events.Event) error {
 		d.broadcast(messagesUc.MessageCreated, e, resp)
 	}
 	return nil
+}
+
+func (d *Dispatcher) replyChannelMembers(ctx context.Context, prev events.Event, cid models.ChannelId) {
+	if cid == models.NoChannel {
+		return
+	}
+	resp, err := d.channelsUc.GetMembers(ctx, prev.GetUid(), channelsUc.ChannelsMembersRequest{ChannelId: cid})
+	if err != nil {
+		d.logger.Errorf("Get members failed: %v", err)
+		return
+	}
+	d.reply(channelsUc.ChannelsMembers, prev, resp)
 }
 
 func (d *Dispatcher) broadcastUserInfo(ctx context.Context, prev events.Event, uid models.Uid) {

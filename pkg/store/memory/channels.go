@@ -250,7 +250,7 @@ func (s *channelsMemoryStore) join(ctx context.Context, cid models.ChannelId, ui
 	if isMember, err := s.isMember(ctx, cid, uid); err != nil {
 		return err
 	} else if isMember {
-		return store.ErrUserAlreadyJoined
+		return nil
 	}
 
 	if _, ok := s.members[cid]; !ok {
@@ -272,7 +272,7 @@ func (s *channelsMemoryStore) Leave(ctx context.Context, cid models.ChannelId, u
 	if isMember, err := s.isMember(ctx, cid, uid); err != nil {
 		return err
 	} else if !isMember {
-		return store.ErrUserAlreadyLeave
+		return nil
 	}
 
 	delete(s.members[cid], uid)
