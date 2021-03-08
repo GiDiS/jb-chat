@@ -1,6 +1,7 @@
 package container
 
 import (
+	"context"
 	"errors"
 	"jb_chat/pkg/events"
 	"jb_chat/pkg/handlers_ws"
@@ -23,7 +24,6 @@ type Dispatcher struct {
 	messagesUc messagesUc.Messages
 	sessionsUc sessionsUc.Sessions
 	usersUc    usersUc.Users
-	sessions   map[string]models.Session
 	mx         sync.Mutex
 }
 
@@ -31,11 +31,10 @@ func NewDispatcher(c Container) *Dispatcher {
 	d := Dispatcher{
 		dispatcher: c.EventsDispatcher,
 		logger:     c.Logger,
-		sessions:   make(map[string]models.Session),
 		authUc:     authUc.NewAuth(c.Logger, c.Store.Users()),
 		channelsUc: channelsUc.NewChannels(c.Logger, c.Store.Channels(), c.Store.Members(), c.Store.Users()),
 		messagesUc: messagesUc.NewMessages(c.Logger, c.Store.Messages(), c.Store.Users()),
-		sessionsUc: sessionsUc.NewSessions(c.Logger, c.Store.Sessions()),
+		sessionsUc: sessionsUc.NewSessions(c.Logger, c.Store.Sessions(), c.Store.OnlineUsers()),
 		usersUc:    usersUc.NewUsers(c.Logger, c.Store.Users()),
 	}
 	d.init()
@@ -87,12 +86,24 @@ func (d *Dispatcher) onBroadcast(e events.Event) error {
 func (d *Dispatcher) onConnected(e events.Event) error {
 	d.logger.Debugf("Connected: %v", e.Payload)
 	d.broadcast(handlers_ws.WsConnected, e, e.Payload)
+
 	return nil
 }
 
 func (d *Dispatcher) onDisconnected(e events.Event) error {
 	d.logger.Debugf("Disconnected: %v", e.Payload)
+
+	sid, uid := e.GetSid(), e.GetUid()
+	if err := d.sessionsUc.SetOnline(e.Ctx, sid, uid, false); err != nil {
+		return err
+	}
+	if err := d.sessionsUc.Reset(e.Ctx, sid); err != nil {
+		return err
+	}
+
 	d.broadcast(handlers_ws.WsDisconnected, e, e.Payload)
+	d.broadcastUserInfo(e.Ctx, e, uid)
+
 	return nil
 }
 
@@ -109,7 +120,7 @@ func (d *Dispatcher) onAuthRegister(e events.Event) error {
 	d.logger.Debug(payload)
 
 	d.reply(authUc.AuthRegistered, e, payload)
-	d.broadcast(usersUc.UsersInfo, e, payload)
+	d.broadcastUserInfo(e.Ctx, e, uid)
 
 	return nil
 }
@@ -122,25 +133,41 @@ func (d *Dispatcher) onAuthSignIn(e events.Event) error {
 	resp, err := d.authUc.SignIn(e.Ctx, payload)
 	if err != nil {
 		return err
+	} else if resp.Me == nil {
+		d.reply(authUc.AuthRequired, e, resp)
+		return nil
 	}
-	d.reply(authUc.AuthSignedIn, e, resp)
-	d.broadcast(usersUc.UsersInfo, e, resp.Me)
 
-	if sid := e.GetSid(); sid != "" && resp.Me != nil {
-		_, err = d.sessionsUc.Update(e.Ctx, sid, func(sess models.Session) (models.Session, error) {
-			sess.UserId = resp.Me.UserId
-			return sess, nil
-		})
+	sid := e.GetSid()
+	if err = d.sessionsUc.SetUid(e.Ctx, sid, resp.Me.UserId); err != nil {
+		return err
 	}
+	if err = d.sessionsUc.SetOnline(e.Ctx, sid, resp.Me.UserId, true); err != nil {
+		return err
+	}
+
+	d.reply(authUc.AuthSignedIn, e, resp)
+	d.broadcastUserInfo(e.Ctx, e, resp.Me.UserId)
 
 	return nil
 }
 
 func (d *Dispatcher) onAuthSignOut(e events.Event) error {
+	sid, uid := e.GetSid(), e.GetUid()
 	if err := d.authUc.SignOut(e.Ctx, ""); err != nil {
 		return err
 	}
-	d.broadcast(authUc.AuthSignedOut, e, nil)
+
+	if err := d.sessionsUc.SetOnline(e.Ctx, sid, uid, false); err != nil {
+		return err
+	}
+	if err := d.sessionsUc.SetUid(e.Ctx, sid, models.NoUser); err != nil {
+		return err
+	}
+
+	d.reply(authUc.AuthSignedOut, e, nil)
+	d.broadcastUserInfo(e.Ctx, e, uid)
+
 	return nil
 }
 
@@ -271,11 +298,27 @@ func (d *Dispatcher) onUsersGetList(e events.Event) error {
 		return usecases.ErrInvalidRequest
 	}
 
-	if resp, err := d.usersUc.GetList(e.Ctx, request); err != nil {
+	resp, err := d.usersUc.GetList(e.Ctx, request)
+	if err != nil {
 		return err
-	} else {
-		d.reply(usersUc.UsersList, e, resp)
 	}
+	online, err := d.sessionsUc.GetAllOnline(e.Ctx)
+	if err != nil {
+		return err
+	}
+	users := resp.Users
+	for idx, user := range users {
+		if _, ok := online[user.UserId]; ok {
+			user.Status = models.UserStatusOnline
+		} else {
+			user.Status = models.UserStatusOffline
+		}
+		users[idx] = user
+	}
+	resp.SetUsers(users)
+
+	d.reply(usersUc.UsersList, e, resp)
+
 	return nil
 }
 
@@ -299,11 +342,27 @@ func (d *Dispatcher) onMessagesGetList(e events.Event) error {
 		return usecases.ErrInvalidRequest
 	}
 
-	if resp, err := d.messagesUc.GetList(e.Ctx, request); err != nil {
+	resp, err := d.messagesUc.GetList(e.Ctx, request)
+	if err != nil {
 		return err
-	} else {
-		d.reply(messagesUc.MessageList, e, resp)
 	}
+
+	online, err := d.sessionsUc.GetAllOnline(e.Ctx)
+	if err != nil {
+		return err
+	}
+	users := resp.Users
+	for idx, user := range users {
+		if _, ok := online[user.UserId]; ok {
+			user.Status = models.UserStatusOnline
+		} else {
+			user.Status = models.UserStatusOffline
+		}
+		users[idx] = user
+	}
+	resp.Users = users
+	d.reply(messagesUc.MessageList, e, resp)
+
 	return nil
 }
 
@@ -322,6 +381,31 @@ func (d *Dispatcher) onMessageCreate(e events.Event) error {
 		d.broadcast(messagesUc.MessageCreated, e, resp)
 	}
 	return nil
+}
+
+func (d *Dispatcher) broadcastUserInfo(ctx context.Context, prev events.Event, uid models.Uid) {
+	if uid == models.NoUser {
+		return
+	}
+	resp, err := d.usersUc.Get(ctx, usersUc.UsersInfoRequest{
+		UserId: uid,
+	})
+	if err != nil {
+		d.logger.Errorf("users get failed: %v", err)
+		return
+	}
+
+	isOnline, err := d.sessionsUc.IsOnline(ctx, uid)
+	if err != nil {
+		d.logger.Errorf("user get status failed: %v", err)
+		resp.User.Status = models.UserStatusUnknown
+	} else if isOnline {
+		resp.User.Status = models.UserStatusOnline
+	} else {
+		resp.User.Status = models.UserStatusOffline
+	}
+
+	d.broadcast(usersUc.UsersInfo, prev, resp)
 }
 
 func (d *Dispatcher) on(t events.Type, h events.EventHandler) {

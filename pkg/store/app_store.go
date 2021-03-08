@@ -5,5 +5,6 @@ type AppStore interface {
 	Members() ChannelMembersStore
 	Messages() MessagesStore
 	Sessions() SessionsStore
+	OnlineUsers() UsersOnlineStore
 	Users() UsersStore
 }

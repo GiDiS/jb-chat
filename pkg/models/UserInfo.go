@@ -1,12 +1,12 @@
 package models
 
-type UserStatus uint8
+type UserStatus string
 
 const (
-	UserStatusUnknown UserStatus = iota
-	UserStatusOffline
-	UserStatusOnline
-	UserStatusAway
+	UserStatusUnknown UserStatus = "unknown"
+	UserStatusOffline UserStatus = "offline"
+	UserStatusOnline  UserStatus = "online"
+	UserStatusAway    UserStatus = "away"
 )
 
 type UserInfo struct {

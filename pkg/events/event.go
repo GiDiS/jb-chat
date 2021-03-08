@@ -48,8 +48,8 @@ type Event struct {
 type EventOptionSetter func(e *Event) error
 
 type Destination struct {
-	Type DestinationType
-	Addr string
+	Type DestinationType `json:"type"`
+	Addr string          `json:"addr,omitempty"`
 }
 
 func NewEvent(eventType Type, opts ...EventOptionSetter) (Event, error) {
@@ -100,6 +100,9 @@ func (e *Event) GetId() string {
 
 // GetSid - gets associated session id
 func (e *Event) GetSid() string {
+	if e == nil || e.Ctx == nil {
+		return ""
+	}
 	conId, ok := e.Ctx.Value("connection").(string)
 	if !ok {
 		return ""
@@ -109,7 +112,7 @@ func (e *Event) GetSid() string {
 
 // GetUid - gets associated user id
 func (e *Event) GetUid() models.Uid {
-	if e != nil || e.Ctx == nil {
+	if e == nil || e.Ctx == nil {
 		return models.NoUser
 	}
 	uid, ok := e.Ctx.Value("uid").(models.Uid)
@@ -122,12 +125,13 @@ func (e *Event) GetUid() models.Uid {
 
 // SetUid - sets associated user id
 func (e *Event) SetUid(uid models.Uid) {
-	if e != nil || e.Ctx == nil {
+	if e == nil {
 		return
 	}
-	if uid >= 0 && e.GetUid() == uid {
-		e.Ctx = context.WithValue(e.Ctx, "uid", uid)
+	if e.Ctx == nil {
+		e.Ctx = context.Background()
 	}
+	e.Ctx = context.WithValue(e.Ctx, "uid", uid)
 }
 
 func (e *Event) UnmarshalJSON(blob []byte) error {

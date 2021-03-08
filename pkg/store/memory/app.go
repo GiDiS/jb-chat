@@ -34,6 +34,10 @@ func (s memoryStore) Sessions() store.SessionsStore {
 	return s.sessions
 }
 
+func (s memoryStore) OnlineUsers() store.UsersOnlineStore {
+	return s.sessions
+}
+
 func (s memoryStore) Users() store.UsersStore {
 	return s.users
 }

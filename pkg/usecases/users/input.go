@@ -29,6 +29,12 @@ type UsersInfoResponse struct {
 	User models.UserInfo `json:"user"`
 }
 
+func NewUsersInfoResponse(user models.UserInfo) UsersInfoResponse {
+	resp := UsersInfoResponse{}
+	resp.SetUser(user)
+	return resp
+}
+
 func (l *UsersInfoResponse) SetUser(user models.UserInfo) {
 	l.Ok = true
 	l.User = user

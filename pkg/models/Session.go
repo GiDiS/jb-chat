@@ -13,7 +13,9 @@ type Session struct {
 	Token     string    `json:"token"`
 	Expired   bool      `json:"expired"`
 	Started   time.Time `json:"started"`
+	Update    time.Time `json:"updated"`
 	Expires   time.Time `json:"expires"`
+	IsOnline  bool      `json:"is_online"`
 }
 
 func (sid SessionId) String() string {

@@ -70,7 +70,7 @@ func (r *resolver) Unmarshal(raw []byte) (Event, error) {
 	rawPayload, _ := rawMsg["payload"]
 	payload, err := DefaultResolver.UnmarshalPayload(event.Type, rawPayload)
 	if err != nil {
-		return Event{Type: InvalidPayload, Payload: raw}, err
+		return Event{Type: InvalidPayload, Payload: string(raw)}, err
 	}
 	event.Payload = payload
 
