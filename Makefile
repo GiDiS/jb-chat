@@ -1,5 +1,5 @@
 
-.PHONY: all clean build deps run test-e2e test  ui-docker-build ui-docker-run
+.PHONY: all clean build deps run test-e2e test  ui-docker-build ui-docker-run build-container deploy-prod remove-prod
 
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 PWD:=$(shell pwd)
@@ -87,3 +87,6 @@ build-container:
 
 deploy-prod:
 	kubectl -n jb-chat apply -f deploy/app-prod.yaml
+
+remove-prod:
+	kubectl delete namespace jb-chat
