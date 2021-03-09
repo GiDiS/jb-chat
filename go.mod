@@ -1,4 +1,4 @@
-module jb_chat
+module github.com/GiDiS/jb-chat
 
 go 1.15
 
