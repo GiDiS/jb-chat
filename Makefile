@@ -1,5 +1,6 @@
 
-.PHONY: all clean build deps run test-e2e test  ui-docker-build ui-docker-run \
+.PHONY: all clean build deps  test-e2e test  ui-docker-build ui-docker-run \
+	run run-host-prod run-host-staging \
 	build-container-prod deploy-prod remove-prod run-prod \
 	build-container-staging deploy-staging stop-staging run-staging
 
@@ -64,8 +65,18 @@ build-jb:
 
 build: build-jb
 
-run: ui-docker-build
+run-host-prod: ui-docker-build
 	go generate ./...
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go run  \
+    		-ldflags='-X "main.RELEASE=${RELEASE}" -X "main.COMMIT=${GITHASH}" -X "main.BUILDDATE=${BUILDDATE}"' \
+    		./cmd/chatd/main.go
+
+run: run-host-prod
+
+run-host-staging: ui-docker-build
+	go generate ./...
+	@export SEED=1
+	@export APP_ENV=staging
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go run  \
     		-ldflags='-X "main.RELEASE=${RELEASE}" -X "main.COMMIT=${GITHASH}" -X "main.BUILDDATE=${BUILDDATE}"' \
     		./cmd/chatd/main.go
