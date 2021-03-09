@@ -66,3 +66,7 @@ cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make stop-production
 * Back: Metrics
 * Deploy: helm chart
 * Deploy: minikube deploy with ingress for stable google sign-in
+
+## App arch
+
+![App arch diagram](docs/arch.png)

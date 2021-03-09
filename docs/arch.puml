@@ -1,0 +1,49 @@
+@startuml
+package "Back" {
+  WS - [Ws transport]
+  [Ws transport] <--> [Dispatcher]
+  frame "Store" {
+    [Channels]
+    [Messages]
+    [Members]
+    [Sessions]
+    [Users]
+  }
+
+  Store -- [MemoryStore]
+  Store -- [PersistentStore?]
+  [Dispatcher] <--> [Usecases]
+  Store <--> [Usecases]
+  HTTP - [Static handler]
+  [Static handler] - StaticFiles
+  database "StaticFiles" {
+  }
+ database "MemoryDb" {
+ }
+
+}
+
+package "UI" {
+  [Static files] <--> HTTP
+  [Socket]- WS
+  [Static files] --> [React]
+  [React] <--> [MobxStore]
+  [MobxStore] <--> [Socket]
+}
+
+cloud {
+  [Google sign-in]
+}
+
+
+
+database "PersistentDb" {
+}
+
+
+
+[React] <--> [Google sign-in]
+[MemoryStore] <--> MemoryDb
+[PersistentStore?] <--> PersistentDb
+
+@enduml
