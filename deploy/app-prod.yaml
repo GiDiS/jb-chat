@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jb-chat
+  namespace: jb-chat
+  labels:
+    app: jb-chat
+    component: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jb-chat
+      component: app
+  template:
+    metadata:
+      labels:
+        app: jb-chat
+        component: app
+    spec:
+      containers:
+        - name: app
+          image: jb-chat:0.1
+          env:
+            - name: PORT
+              value: "8888"
+            - name: DIAG_PORT
+              value: "8889"
+          ports:
+            - name: http
+              containerPort: 8888
+              protocol: TCP
+            - name: http-diag
+              containerPort: 8889
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: jb-chat
+  name: jb-chat
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8888
+      protocol: TCP
+      targetPort: 8888
+    - name: http-diag
+      port: 8889
+      protocol: TCP
+      targetPort: 8889
+  selector:
+    app: jb-chat

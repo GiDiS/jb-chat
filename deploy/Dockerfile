@@ -51,7 +51,7 @@ COPY --from=ui-builder /ui/build /app/ui/build
 
 WORKDIR /app
 
-#USER myapp
+USER nobody:nobody
 
 CMD ["/app/jb-chat"]
 

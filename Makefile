@@ -83,4 +83,7 @@ ui-docker-build:
 			sh -c 'npm run build'
 
 build-container:
+	docker build -f deploy/Dockerfile -t jb-chat:0.1 .
 
+deploy-prod:
+	kubectl -n jb-chat apply -f deploy/app-prod.yaml
