@@ -2,9 +2,9 @@ package channels
 
 import (
 	"context"
-	"jb_chat/pkg/models"
-	"jb_chat/pkg/store"
-	"jb_chat/pkg/usecases"
+	"github.com/GiDiS/jb-chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/store"
+	"github.com/GiDiS/jb-chat/pkg/usecases"
 )
 
 func (c *channelsImpl) GetDirect(ctx context.Context, uid models.Uid, request ChannelsGetDirectRequest) (resp ChannelsOneResult, err error) {

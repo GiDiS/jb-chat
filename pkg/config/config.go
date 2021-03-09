@@ -1,8 +1,8 @@
 package config
 
 import (
+	"github.com/GiDiS/jb-chat/pkg/logger"
 	"github.com/caarlos0/env"
-	"jb_chat/pkg/logger"
 )
 
 type Config struct {

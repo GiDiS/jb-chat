@@ -2,8 +2,8 @@ package messages
 
 import (
 	"context"
-	"jb_chat/pkg/models"
-	"jb_chat/pkg/store"
+	"github.com/GiDiS/jb-chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/store"
 )
 
 func (c *messagesImpl) GetList(ctx context.Context, request MessageListRequest) (resp MessageListResponse, err error) {

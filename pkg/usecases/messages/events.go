@@ -1,6 +1,6 @@
 package messages
 
-import "jb_chat/pkg/events"
+import "github.com/GiDiS/jb-chat/pkg/events"
 
 const (
 	MessageCreate  events.Type = "messages.create"

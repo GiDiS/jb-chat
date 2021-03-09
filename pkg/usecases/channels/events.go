@@ -1,6 +1,6 @@
 package channels
 
-import "jb_chat/pkg/events"
+import "github.com/GiDiS/jb-chat/pkg/events"
 
 const (
 	ChannelsCreate     events.Type = "channels.create" // +

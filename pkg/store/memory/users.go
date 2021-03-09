@@ -2,8 +2,8 @@ package memory
 
 import (
 	"context"
-	"jb_chat/pkg/models"
-	"jb_chat/pkg/store"
+	"github.com/GiDiS/jb-chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/store"
 	"sort"
 	"sync"
 )

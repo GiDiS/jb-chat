@@ -2,7 +2,7 @@ package messages
 
 import (
 	"context"
-	"jb_chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/models"
 	"time"
 )
 

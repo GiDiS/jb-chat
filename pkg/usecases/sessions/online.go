@@ -2,7 +2,7 @@ package sessions
 
 import (
 	"context"
-	"jb_chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/models"
 )
 
 type Online interface {

@@ -2,8 +2,8 @@ package users
 
 import (
 	"context"
-	"jb_chat/pkg/logger"
-	"jb_chat/pkg/store"
+	"github.com/GiDiS/jb-chat/pkg/logger"
+	"github.com/GiDiS/jb-chat/pkg/store"
 )
 
 type Users interface {

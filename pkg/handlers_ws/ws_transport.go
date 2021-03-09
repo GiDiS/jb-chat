@@ -2,11 +2,11 @@ package handlers_ws
 
 import (
 	"context"
+	"github.com/GiDiS/jb-chat/pkg/events"
+	"github.com/GiDiS/jb-chat/pkg/logger"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
-	"jb_chat/pkg/events"
-	"jb_chat/pkg/logger"
 	"net/http"
 	"os"
 	"sync"

@@ -1,8 +1,8 @@
 package handlers_ws
 
 import (
-	"jb_chat/pkg/events"
-	"jb_chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/events"
+	"github.com/GiDiS/jb-chat/pkg/models"
 	"time"
 )
 

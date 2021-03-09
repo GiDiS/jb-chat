@@ -2,7 +2,7 @@ package channels
 
 import (
 	"context"
-	"jb_chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/models"
 )
 
 func (c *channelsImpl) GetMembers(ctx context.Context, uid models.Uid, request ChannelsMembersRequest) (resp ChannelsMembersResponse, err error) {

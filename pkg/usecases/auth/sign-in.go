@@ -3,9 +3,9 @@ package auth
 import (
 	"context"
 	"fmt"
-	"jb_chat/pkg/auth"
-	"jb_chat/pkg/models"
-	"jb_chat/pkg/store"
+	"github.com/GiDiS/jb-chat/pkg/auth"
+	"github.com/GiDiS/jb-chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/store"
 	"strconv"
 	"strings"
 )

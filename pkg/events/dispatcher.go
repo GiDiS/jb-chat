@@ -2,7 +2,7 @@ package events
 
 import (
 	"context"
-	"jb_chat/pkg/logger"
+	"github.com/GiDiS/jb-chat/pkg/logger"
 )
 
 type Dispatcher interface {

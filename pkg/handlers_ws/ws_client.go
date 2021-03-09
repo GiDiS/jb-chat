@@ -3,10 +3,10 @@ package handlers_ws
 import (
 	"context"
 	"fmt"
+	"github.com/GiDiS/jb-chat/pkg/events"
+	"github.com/GiDiS/jb-chat/pkg/logger"
+	"github.com/GiDiS/jb-chat/pkg/models"
 	"github.com/gorilla/websocket"
-	"jb_chat/pkg/events"
-	"jb_chat/pkg/logger"
-	"jb_chat/pkg/models"
 	"sync/atomic"
 	"time"
 )

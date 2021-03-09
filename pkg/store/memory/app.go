@@ -1,6 +1,6 @@
 package memory
 
-import "jb_chat/pkg/store"
+import "github.com/GiDiS/jb-chat/pkg/store"
 
 type memoryStore struct {
 	channels *channelsMemoryStore

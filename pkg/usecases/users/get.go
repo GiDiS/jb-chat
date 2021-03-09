@@ -2,7 +2,7 @@ package users
 
 import (
 	"context"
-	"jb_chat/pkg/models"
+	"github.com/GiDiS/jb-chat/pkg/models"
 )
 
 func (u *usersImpl) Get(ctx context.Context, req UsersInfoRequest) (resp UsersInfoResponse, err error) {

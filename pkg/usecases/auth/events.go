@@ -1,6 +1,6 @@
 package auth
 
-import "jb_chat/pkg/events"
+import "github.com/GiDiS/jb-chat/pkg/events"
 
 const (
 	AuthMe         events.Type = "auth.me"

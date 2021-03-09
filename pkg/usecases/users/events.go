@@ -1,6 +1,6 @@
 package users
 
-import "jb_chat/pkg/events"
+import "github.com/GiDiS/jb-chat/pkg/events"
 
 const (
 	UsersGetList events.Type = "users.get-list"

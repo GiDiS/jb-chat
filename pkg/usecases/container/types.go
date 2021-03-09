@@ -1,13 +1,13 @@
 package container
 
 import (
-	"jb_chat/pkg/events"
-	"jb_chat/pkg/handlers_ws"
-	"jb_chat/pkg/logger"
-	"jb_chat/pkg/usecases/auth"
-	"jb_chat/pkg/usecases/channels"
-	"jb_chat/pkg/usecases/messages"
-	"jb_chat/pkg/usecases/users"
+	"github.com/GiDiS/jb-chat/pkg/events"
+	"github.com/GiDiS/jb-chat/pkg/handlers_ws"
+	"github.com/GiDiS/jb-chat/pkg/logger"
+	"github.com/GiDiS/jb-chat/pkg/usecases/auth"
+	"github.com/GiDiS/jb-chat/pkg/usecases/channels"
+	"github.com/GiDiS/jb-chat/pkg/usecases/messages"
+	"github.com/GiDiS/jb-chat/pkg/usecases/users"
 )
 
 const (

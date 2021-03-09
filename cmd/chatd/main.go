@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"jb_chat/pkg/config"
-	"jb_chat/pkg/daemon"
-	"jb_chat/pkg/logger"
+	"github.com/GiDiS/jb-chat/pkg/config"
+	"github.com/GiDiS/jb-chat/pkg/daemon"
+	"github.com/GiDiS/jb-chat/pkg/logger"
 	"os"
 )
 

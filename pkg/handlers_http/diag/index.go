@@ -2,8 +2,8 @@ package diag
 
 import (
 	"fmt"
+	"github.com/GiDiS/jb-chat/pkg/handlers_http/public"
 	"github.com/gorilla/mux"
-	"jb_chat/pkg/handlers_http/public"
 	"net/http"
 )
 

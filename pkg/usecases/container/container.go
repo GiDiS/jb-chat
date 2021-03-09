@@ -2,13 +2,13 @@ package container
 
 import (
 	"context"
-	"jb_chat/pkg/config"
-	"jb_chat/pkg/events"
-	"jb_chat/pkg/handlers_ws"
-	"jb_chat/pkg/logger"
-	"jb_chat/pkg/store"
-	"jb_chat/pkg/store/memory"
-	"jb_chat/pkg/store/seed"
+	"github.com/GiDiS/jb-chat/pkg/config"
+	"github.com/GiDiS/jb-chat/pkg/events"
+	"github.com/GiDiS/jb-chat/pkg/handlers_ws"
+	"github.com/GiDiS/jb-chat/pkg/logger"
+	"github.com/GiDiS/jb-chat/pkg/store"
+	"github.com/GiDiS/jb-chat/pkg/store/memory"
+	"github.com/GiDiS/jb-chat/pkg/store/seed"
 )
 
 type Container struct {
