@@ -1,0 +1,22 @@
+
+
+.ui.items.channelsList > .item  {
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    margin: 0;
+}
+
+.ui.items.channelsList > .item:hover, .ui.items.channelsList > .item.active {
+    background-color: #E0E0E0;
+}
+
+.ui.items.channelsList {
+    height: 700px;
+    max-height: 650px;
+    overflow-y: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+
+

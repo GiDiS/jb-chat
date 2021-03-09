@@ -1,0 +1,19 @@
+
+.sysDashboard {
+    /*position: absolute;*/
+    left:0;
+    top: 0;
+    background-color: #E0E0E0;
+    border-bottom: 1px inset;
+    margin-bottom: 1rem;
+}
+
+.sysDashboard > ul {
+    margin: 0; padding: 0; list-style-type: none;
+}
+
+.sysDashboard > ul > li {
+    display: inline-block;
+    margin: 0 2px;
+    border-left: 1px solid #cce2ff;
+}

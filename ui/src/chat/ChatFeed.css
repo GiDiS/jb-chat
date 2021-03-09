@@ -1,0 +1,95 @@
+.chatFeedContainer {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+}
+
+.ui.feed {
+    position: relative;
+    overflow-y: auto;
+    height: 600px;
+    /*max-height: 90%;*/
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 1rem;
+}
+
+.ui.circular.button.scrollDownHandler {
+    position: absolute;
+    z-index: 20;
+    bottom: 1rem;
+    right: 1rem;
+}
+
+.ui.feed > .event {
+    position: relative;
+}
+
+.ui.feed > .event.self {
+    flex-direction: row-reverse;
+}
+
+.ui.feed > .event >  .label > a > img {
+    display: inline-block;
+    margin-top: 1em;
+}
+
+.ui.feed > .event > .label img {
+    /*margin-top: 1em;*/
+    width: 2.5em;
+    height: 2.5em;
+    object-fit: cover;
+}
+
+.ui.feed > .event > .content, .ui.feed > .event > .label + .content {
+    margin-right: 20%;
+    background-color: #F4F4F4;
+    padding: 5px;
+    margin-left: 10px;
+}
+
+.ui.feed > .event.self > .content, .ui.feed > .event.self > .label + .content {
+    background-color: #F0E8E3;
+
+}
+
+.ui.feed > .event > .content:before {
+    border-style: solid;
+    border-width: 10px 10px 10px 10px;
+    border-color: transparent #F4F4F4 transparent  transparent ;
+    position: absolute;
+    content: '';
+    width: 10px;
+    height: 10px;
+    display: block;
+    left: 28px;
+    top: 25px;
+}
+
+
+.ui.feed > .event.self > .content:before {
+    display: none;
+}
+.ui.feed > .event.self > .content:after {
+    border-style: solid;
+    border-width: 10px 10px 10px 10px;
+    border-color: transparent transparent transparent #F0E8E3;
+    position: absolute;
+    content: '';
+    width: 10px;
+    height: 10px;
+    display: block;
+    right: 27px;
+    top: 25px;
+}
+
+.ui.feed > .event.self > .content {
+    margin-left: 20%;
+    padding: 5px;
+    margin-right: 10px;
+    background-color: #F0E8E3;
+}
+
+.ui.feed > .event > .content .meta > .date {
+    display: inline-block;
+}

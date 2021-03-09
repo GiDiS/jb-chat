@@ -1,0 +1,32 @@
+
+
+.ui.grid > .row > .column.App-sidebar, .ui.grid > .row > .column.App-main {
+    position: relative;
+    max-height: 100%;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+}
+
+.ui.grid > .row > .column.App-sidebar {
+    padding-right: 1rem;
+}
+
+.App-wrapper {
+    height: 100%;
+}
+.App-sidebar {
+    position: relative;
+    /*display: flex;*/
+    /*height: 750px;*/
+    height: 100%;
+    min-height: 100%;
+}
+
+.App-main {
+    height: 100%;
+}
+
+.ui.grid > .row > .column.App-main {
+    /*padding: 1rem;*/
+}
