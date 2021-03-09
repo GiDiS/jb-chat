@@ -19,12 +19,14 @@ spec:
     spec:
       containers:
         - name: app
-          image: jb-chat-prod:0.1
+          image: jb-chat-staging:0.1
           env:
             - name: PORT
               value: "8888"
             - name: DIAG_PORT
               value: "8889"
+            - name: SEED
+              value: "1"
           ports:
             - name: http
               containerPort: 8888
@@ -36,42 +38,21 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: jb-chat
   labels:
     app: jb-chat
-  name: jb-chat-svc
 spec:
-#  type: ClusterIP
   type: NodePort
   ports:
   - name: http
     port: 8888
     protocol: TCP
     targetPort: 8888
-    nodePort: 30888
+    nodePort: 30898
   - name: http-diag
     port: 8889
     protocol: TCP
     targetPort: 8889
-    nodePort: 30889
+    nodePort: 30899
   selector:
     app: jb-chat
-
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: jb-chat-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-spec:
-  rules:
-    - host: jb-chat.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: jb-chat-svc
-                port:
-                  number: 8888

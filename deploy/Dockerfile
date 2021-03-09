@@ -33,8 +33,11 @@ RUN cd /go/src/jb-chat && make build
 #-------------------------------------------------------
 FROM scratch
 
-ENV PORT 8888
-ENV DIAG_PORT 8889
+ARG PORT
+ARG DIAG_PORT
+
+ENV PORT=${PORT:-8888}
+ENV DIAG_PORT=${DIAG_PORT:-8889}
 ENV docker 1
 
 EXPOSE $PORT
@@ -51,7 +54,7 @@ COPY --from=ui-builder /ui/build /app/ui/build
 
 WORKDIR /app
 
-USER nobody:nobody
+#USER nobody:nobody
 
 CMD ["/app/jb-chat"]
 

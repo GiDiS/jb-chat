@@ -1,11 +1,15 @@
 
-.PHONY: all clean build deps run test-e2e test  ui-docker-build ui-docker-run build-container deploy-prod remove-prod
+.PHONY: all clean build deps run test-e2e test  ui-docker-build ui-docker-run \
+	build-container-prod deploy-prod remove-prod run-prod \
+	build-container-staging deploy-staging stop-staging run-staging
 
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 PWD:=$(shell pwd)
 
 UI_PORT:=3000
-NODE_IMAGE=node:lts-alpine
+NODE_IMAGE:=node:lts-alpine
+NS_PROD:=js-chat
+NS_STAGING:=js-chat-staging
 
 GIT_COMMIT := $(shell git rev-parse --short=7 HEAD)
 
@@ -60,11 +64,11 @@ build-jb:
 
 build: build-jb
 
-run:
+run: ui-docker-build
 	go generate ./...
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go run  \
     		-ldflags='-X "main.RELEASE=${RELEASE}" -X "main.COMMIT=${GITHASH}" -X "main.BUILDDATE=${BUILDDATE}"' \
-    		./cmd/
+    		./cmd/chatd/main.go
 
 ui-docker-run:
 	docker run --publish '3000:3000' --rm --name jb-ui-run --volume "${PWD}/ui:/ui" \
@@ -82,11 +86,40 @@ ui-docker-build:
 			"${NODE_IMAGE}" \
 			sh -c 'npm run build'
 
-build-container:
-	docker build -f deploy/Dockerfile -t jb-chat:0.1 .
+build-container-prod:
+	@eval $(minikube docker-env)
+	docker build --build-arg 'APP_ENV=production' -f deploy/Dockerfile -t jb-chat-prod:0.1 .
+	@minikube image load jb-chat-prod:0.1
 
 deploy-prod:
-	kubectl -n jb-chat apply -f deploy/app-prod.yaml
+	@eval $(minikube docker-env)
+	test -n "$(shell kubectl get namespace "${NS_PROD}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
+		|| kubectl create namespace "${NS_PROD}"
+	kubectl -n "${NS_PROD}" apply -f deploy/app-prod.yaml
+	@echo -e "Services:"
+	@minikube service list -n "${NS_PROD}"
 
-remove-prod:
-	kubectl delete namespace jb-chat
+run-prod: build-container-prod deploy-prod
+
+stop-prod:
+	test -z "$(shell kubectl get namespace "${NS_PROD}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
+		|| kubectl delete namespace "${NS_PROD}"
+
+build-container-staging:
+	@eval $(minikube docker-env)
+	docker build --build-arg 'APP_ENV=staging' -f deploy/Dockerfile -t jb-chat-staging:0.1 .
+	@minikube image load jb-chat-staging:0.1
+
+deploy-staging:
+	@eval $(minikube docker-env)
+	test -n "$(shell kubectl get namespace "${NS_STAGING}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
+		|| kubectl create namespace "${NS_STAGING}"
+	kubectl -n "${NS_STAGING}" apply -f deploy/app-staging.yaml
+	@echo "Services:"
+	@minikube service list -n "${NS_STAGING}"
+
+run-staging: build-container-staging deploy-staging
+
+stop-staging:
+	test -z "$(shell kubectl get namespace "${NS_STAGING}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)"  \
+		||  kubectl delete namespace jb-chat-staging
