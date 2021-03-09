@@ -32,7 +32,9 @@ func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
 
 	c.Store = memory.NewAppStore()
 
-	_, _ = seed.MakeSeeder(context.Background(), c.Store)
+	if cfg.Seed {
+		_, _ = seed.MakeSeeder(context.Background(), c.Store)
+	}
 
 	c.WsTransport = handlers_ws.NewWsTransport(c.EventsResolver, c.Logger)
 

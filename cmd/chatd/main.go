@@ -9,10 +9,8 @@ import (
 )
 
 func main() {
-	cfg := config.Config{
-		PublicPort: 8888,
-		DiagPort:   8889,
-	}
-	app := daemon.NewApp(cfg, logger.DefaultLogger())
+	appLogger := logger.DefaultLogger()
+	cfg := config.MustBuild(appLogger)
+	app := daemon.NewApp(cfg, appLogger)
 	os.Exit(app.Run(context.Background()))
 }

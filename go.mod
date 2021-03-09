@@ -3,6 +3,7 @@ module jb_chat
 go 1.15
 
 require (
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/markbates/pkger v0.17.1
