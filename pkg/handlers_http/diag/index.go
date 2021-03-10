@@ -14,16 +14,26 @@ type RootHandlers interface {
 }
 
 type rootHandlers struct {
+	metrics bool
+	pprof   bool
 }
 
-func NewRootHandlers() *rootHandlers {
-	return &rootHandlers{}
+func NewRootHandlers(metrics, pprof bool) *rootHandlers {
+	return &rootHandlers{
+		metrics: metrics,
+		pprof:   pprof,
+	}
 }
 
 func (a *rootHandlers) RegisterHandlers(r *mux.Router) {
 	r.HandleFunc("/healthz", a.HealthzHandler()).Methods("GET")
 	r.HandleFunc("/readyz", a.ReadyzHandler()).Methods("GET")
-	//r.Handle("/metrics", promhttp.Handler())
+	if a.metrics {
+		registerMetrics(r)
+	}
+	if a.pprof {
+		registerPprof(r)
+	}
 }
 
 func (a *rootHandlers) HealthzHandler() http.HandlerFunc {

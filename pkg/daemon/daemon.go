@@ -143,12 +143,13 @@ func (app *App) initPublicHttpServer(ctx context.Context) error {
 
 func (app *App) initDiagHttpServer(ctx context.Context) error {
 
+	cfg := app.config
 	diagRouter := mux.NewRouter()
-	diagHandlers := diag.NewRootHandlers()
+	diagHandlers := diag.NewRootHandlers(cfg.Metrics, cfg.Pprof)
 	diagHandlers.RegisterHandlers(diagRouter)
 
 	server := &http.Server{
-		Addr:    ":" + strconv.Itoa(app.config.DiagPort),
+		Addr:    ":" + strconv.Itoa(cfg.DiagPort),
 		Handler: diagRouter,
 	}
 	serverErrors := make(chan error)
