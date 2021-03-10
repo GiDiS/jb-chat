@@ -16,7 +16,7 @@ class Socket {
     listeners = {}
 
     constructor({state, server}) {
-        this.server = server || 'ws://' + window.location.origin.replace(/https?:\/\//, '') + '/ws'
+        this.server = server || window.location.origin.replace(/^http(s?):\/\//, 'ws$1://') + '/ws'
         this.state = state;
         this.eventPrefix = 'ws-client-' + Math.round(Math.random() * 10000).toString()
         this.on('auth.required', this.onAuthRequired)
@@ -40,9 +40,9 @@ class Socket {
                     this.tries++
                     this.lastTry = Date.now()
                     ws = new WebSocket(this.server);
-
                 } catch (e) {
-                    console.log(e)
+                    console.error(e)
+                    return;
                 }
 
                 ws.onopen = (e) => {
