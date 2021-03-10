@@ -9,8 +9,8 @@ PWD:=$(shell pwd)
 
 UI_PORT:=3000
 NODE_IMAGE:=node:lts-alpine
-NS_PROD:=js-chat
-NS_STAGING:=js-chat-staging
+NS_PROD:=jb-chat
+NS_STAGING:=jb-chat-staging
 
 GIT_COMMIT := $(shell git rev-parse --short=7 HEAD)
 
@@ -73,10 +73,10 @@ run-host-prod: ui-docker-build
 
 run: run-host-prod
 
+run-host-staging: export SEED = 1
+run-host-staging: export APP_ENV = staging
 run-host-staging: ui-docker-build
 	go generate ./...
-	@export SEED=1
-	@export APP_ENV=staging
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go run  \
     		-ldflags='-X "main.RELEASE=${RELEASE}" -X "main.COMMIT=${GITHASH}" -X "main.BUILDDATE=${BUILDDATE}"' \
     		./cmd/chatd/main.go
@@ -91,11 +91,11 @@ ui-docker-run:
 
 ui-docker-build:
 	docker run --rm --name jb-ui-build --volume "${PWD}/ui:/ui" \
-			--env 'NODE_ENV=production' \
+			--env "NODE_ENV=staging" \
 			--volume "${PWD}/ui/node_modules/:/root/.npm/" \
 			--workdir "/ui/" \
 			"${NODE_IMAGE}" \
-			sh -c 'npm run build'
+			sh -c "REACT_APP_ENV=staging npm run build"
 
 build-container-prod:
 	@eval $(minikube docker-env)
@@ -118,7 +118,7 @@ stop-prod:
 
 build-container-staging:
 	@eval $(minikube docker-env)
-	docker build --build-arg 'APP_ENV=staging' -f deploy/Dockerfile -t jb-chat-staging:0.1 .
+	docker build --build-arg 'APP_ENV=staging' -f deploy/Dockerfile -t jb-chat-staging:0.1 --no-cache .
 	@minikube image load jb-chat-staging:0.1
 
 deploy-staging:

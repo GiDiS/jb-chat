@@ -38,7 +38,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: jb-chat
+  name: jb-chat-svc
   labels:
     app: jb-chat
 spec:
@@ -56,3 +56,23 @@ spec:
     nodePort: 30899
   selector:
     app: jb-chat
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jb-chat-ingress
+  annotations:
+#    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+    - host: jb-chat-staging.cluster.info
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jb-chat-svc
+                port:
+                  number: 8888
