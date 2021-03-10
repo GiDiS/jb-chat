@@ -107,8 +107,9 @@ deploy-prod:
 	test -n "$(shell kubectl get namespace "${NS_PROD}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
 		|| kubectl create namespace "${NS_PROD}"
 	kubectl -n "${NS_PROD}" apply -f deploy/app-prod.yaml
-	@echo -e "Services:"
+	@echo "Services:"
 	@minikube service list -n "${NS_PROD}"
+	@echo "Add to /etc/hosts to use ingress:  $(shell minikube ip) $(shell kubectl -n "${NS_PROD}" get ingress jb-chat-ingress --output jsonpath='{.spec.rules[0].host}')"
 
 run-prod: build-container-prod deploy-prod
 
@@ -128,6 +129,7 @@ deploy-staging:
 	kubectl -n "${NS_STAGING}" apply -f deploy/app-staging.yaml
 	@echo "Services:"
 	@minikube service list -n "${NS_STAGING}"
+	@echo "Add to /etc/hosts to use ingress:  $(shell minikube ip) $(shell kubectl -n "${NS_STAGING}" get ingress jb-chat-ingress --output jsonpath='{.spec.rules[0].host}')"
 
 run-staging: build-container-staging deploy-staging
 
