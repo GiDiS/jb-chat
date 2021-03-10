@@ -1,11 +1,5 @@
 
 #-------------------------------------------------------
-FROM golang:1.15 as app-modules
-
-ADD go.mod go.sum /m/
-RUN cd /m && go mod download
-
-#-------------------------------------------------------
 FROM node:lts-alpine as ui-modules
 
 ADD ui/package.json ui/package-lock.json ui/yarn.lock /ui/
@@ -22,6 +16,12 @@ COPY --from=ui-modules /ui/node_modules /ui/node_modules
 RUN cd /ui && npm run build
 
 #-------------------------------------------------------
+FROM golang:1.15 as app-modules
+
+ADD go.mod go.sum /m/
+RUN cd /m && go mod download
+
+#-------------------------------------------------------
 FROM  golang:1.15 as app-builder
 
 COPY --from=app-modules /go/pkg /go/pkg
@@ -35,13 +35,18 @@ FROM scratch
 
 ARG PORT
 ARG DIAG_PORT
+ARG GOOGLE_CLIENT_ID
+ARG GOOGLE_CLIENT_SECRET
 
 ENV PORT=${PORT:-8888}
 ENV DIAG_PORT=${DIAG_PORT:-8889}
+ENV GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID}"
+ENV GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET}"
+
 ENV docker 1
 
-EXPOSE $PORT
-EXPOSE $DIAG_PORT
+EXPOSE ${PORT}/tcp
+EXPOSE ${DIAG_PORT}/tcp
 
 VOLUME /app/.env
 
