@@ -9,7 +9,7 @@ class State {
     // @var Socket
     socket = null;
     pingTimer = null;
-    pingEnabled = false;
+    pingEnabled = true;
     lastPing = null;
     isOnline = false;
     user = null;
