@@ -1,4 +1,7 @@
 
+.env.local
 .idea/
 build/
+deploy/k8s-handle/k8s-handle/
 vendor/
+

@@ -1,0 +1,23 @@
+
+apiVersion: v1
+kind: Service {# https://kubernetes.io/docs/user-guide/services/ #}
+metadata:
+  name: {{ app_name }}-svc
+  labels:
+    app: {{ app_name }}
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: {{ app_port }}
+    protocol: TCP
+    targetPort: {{ app_port }}
+    nodePort: {{ app_node_port }}
+  - name: http-diag
+    port: {{ diag_port }}
+    protocol: TCP
+    targetPort: {{ diag_port }}
+    nodePort: {{ diag_node_port }}
+  selector:
+    app: {{ app_name }}
+

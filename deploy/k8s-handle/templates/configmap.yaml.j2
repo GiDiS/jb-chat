@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ app_name }}-conf
+data:
+  .env: |
+    # ENV VARS HERE
+    PORT=8888
+    DIAG_PORT=8889

@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment {# https://kubernetes.io/docs/user-guide/deployments #}
+metadata:
+  name: {{ app_name }}
+spec:
+  replicas: {{ replicas_count }}
+  revisionHistoryLimit: {{ revision_history_limit | default('3') }}
+  selector:
+    matchLabels:
+      app: {{ app_name }}
+      component: app
+  strategy:
+    rollingUpdate:
+      maxUnavailable: {{ max_unavailable | default('0') }}
+      maxSurge: {{ max_surge | default('1') }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ diag_port }}"
+        prometheus.io/scrape: "true"
+      labels:
+        app: {{ app_name }}
+        component: app
+    spec:
+      terminationGracePeriodSeconds: {{ termination_grace_period_seconds | default('60') }}
+      volumes:
+      - configMap:
+          name: {{ app_name }}-conf
+        name: app-conf
+      containers:
+      - name: app
+        env:
+          - name: PORT
+            value: "{{ app_port }}"
+          - name: DIAG_PORT
+            value: "{{ diag_port }}"
+          - name: SEED
+            value: "{{ env.SEED | default('0') }}"
+        leavenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ diag_port }}
+          initialDelaySeconds: 5
+          timeoutSeconds: 30
+        image: {{ image_path }}:{{ image_version }}
+        ports:
+          - name: http
+            containerPort: {{ app_port }}
+            protocol: TCP
+          - name: http-diag
+            containerPort: {{ diag_port }}
+            protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: {{ diag_port }}
+          initialDelaySeconds: 5
+          timeoutSeconds: 30
+#        lifecycle:
+#          preStop: {# preStop hook for zero downtime deployment #}
+#            exec:
+#              command: ["/bin/sh", "-c", "sleep 5"]
+        volumeMounts:
+        - mountPath: /app/.env
+          name: app-conf
+          subPath: .env
