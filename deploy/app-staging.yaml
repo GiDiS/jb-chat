@@ -48,12 +48,12 @@ spec:
     port: 8888
     protocol: TCP
     targetPort: 8888
-    nodePort: 30898
+    nodePort: 30888
   - name: http-diag
     port: 8889
     protocol: TCP
     targetPort: 8889
-    nodePort: 30899
+    nodePort: 30889
   selector:
     app: jb-chat
 

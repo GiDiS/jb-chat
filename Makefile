@@ -1,8 +1,8 @@
 
 .PHONY: all clean build deps  test-e2e test  ui-docker-build ui-docker-run \
 	run run-host-prod run-host-staging \
-	build-container-prod deploy-prod remove-prod run-prod \
-	build-container-staging deploy-staging stop-staging run-staging
+	build-container-prod stop-prod deploy-kctl-prod run-kctl-prod deploy-k8sh-prod run-k8sh-prod \
+	build-container-staging stop-staging deploy-kctl-staging run-kctl-staging deploy-k8sh-staging run-k8sh-staging 
 
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
 PWD:=$(shell pwd)
@@ -11,6 +11,18 @@ UI_PORT:=3000
 NODE_IMAGE:=node:lts-alpine
 NS_PROD:=jb-chat
 NS_STAGING:=jb-chat-staging
+IMAGE_NAME:=jb-chat
+IMAGE_VERSION:=0.1
+
+%-prod: APP_ENV = production
+%-prod: IMAGE_NAME = jb-chat-prod
+%-prod: IMAGE_VERSION = 0.1
+%-prod: NS := $(NS_PROD)
+
+%-staging: APP_ENV = staging
+%-staging: IMAGE_NAME = jb-chat-staging
+%-staging: IMAGE_VERSION = 0.1
+%-staging: NS := $(NS_STAGING)
 
 GIT_COMMIT := $(shell git rev-parse --short=7 HEAD)
 
@@ -97,42 +109,54 @@ ui-docker-build:
 			"${NODE_IMAGE}" \
 			sh -c "REACT_APP_ENV=staging npm run build"
 
-build-container-prod:
+build-container:
 	@eval $(minikube docker-env)
-	docker build --build-arg 'APP_ENV=production' -f deploy/Dockerfile -t jb-chat-prod:0.1 .
-	@minikube image load jb-chat-prod:0.1
+	docker build --build-arg "APP_ENV=$(APP_ENV)" -f deploy/Dockerfile -t "${IMAGE_NAME}:${IMAGE_VERSION}" .
+	@minikube image load "${IMAGE_NAME}:${IMAGE_VERSION}"
 
-deploy-prod:
+stop-kctl:
+	test -z "$(shell kubectl get namespace "$(NS)" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
+    		|| kubectl delete namespace "$(NS)"
+
+deploy-kctl:
 	@eval $(minikube docker-env)
-	test -n "$(shell kubectl get namespace "${NS_PROD}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
-		|| kubectl create namespace "${NS_PROD}"
-	kubectl -n "${NS_PROD}" apply -f deploy/app-prod.yaml
+	test -n "$(shell kubectl get namespace "$(NS)" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
+		|| kubectl create namespace "$(NS)"
+	kubectl -n "$(NS)" apply -f "deploy/app-$(APP_ENV).yaml"
 	@echo "Services:"
-	@minikube service list -n "${NS_PROD}"
-	@echo "Add to /etc/hosts to use ingress:  $(shell minikube ip) $(shell kubectl -n "${NS_PROD}" get ingress jb-chat-ingress --output jsonpath='{.spec.rules[0].host}')"
+	@minikube service list -n "$(NS)"
+	$(eval HOST := $(shell kubectl -n "$(NS)" get ingress jb-chat-ingress --output jsonpath='{.spec.rules[0].host}'))
+	@echo "Add to /etc/hosts to use ingress: \033[32m $(shell minikube ip) $(HOST)\033[0m"
+	@echo "Try with ingress: \033[32m https://$(HOST)\033[0m"
 
-run-prod: build-container-prod deploy-prod
-
-stop-prod:
-	test -z "$(shell kubectl get namespace "${NS_PROD}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
-		|| kubectl delete namespace "${NS_PROD}"
-
-build-container-staging:
+deploy-k8sh:
 	@eval $(minikube docker-env)
-	docker build --build-arg 'APP_ENV=staging' -f deploy/Dockerfile -t jb-chat-staging:0.1 --no-cache .
-	@minikube image load jb-chat-staging:0.1
-
-deploy-staging:
-	@eval $(minikube docker-env)
-	test -n "$(shell kubectl get namespace "${NS_STAGING}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
-		|| kubectl create namespace "${NS_STAGING}"
-	kubectl -n "${NS_STAGING}" apply -f deploy/app-staging.yaml
+	test -n "$(shell kubectl get namespace $(NS) -o jsonpath='{.metadata.uid}' --ignore-not-found=true)" \
+		|| kubectl create namespace $(NS)
+	cd ./deploy/k8s-handle && IMAGE_VERSION=$(IMAGE_VERSION) \
+		k8s-handle deploy -s "$(APP_ENV)" --use-kubeconfig --sync-mode -c config.yaml
 	@echo "Services:"
-	@minikube service list -n "${NS_STAGING}"
-	@echo "Add to /etc/hosts to use ingress:  $(shell minikube ip) $(shell kubectl -n "${NS_STAGING}" get ingress jb-chat-ingress --output jsonpath='{.spec.rules[0].host}')"
+	@minikube service list -n $(NS)
+	$(eval HOST := $(shell kubectl -n "$(NS)" get ingress jb-chat-ingress --output jsonpath='{.spec.rules[0].host}'))
+	@echo "Add to /etc/hosts to use ingress: \033[32m $(shell minikube ip) $(HOST)\033[0m"
+	@echo "Try with ingress: \033[32m https://$(HOST)\033[0m"
 
-run-staging: build-container-staging deploy-staging
+build-container-prod: build-container
+build-container-staging: build-container
 
-stop-staging:
-	test -z "$(shell kubectl get namespace "${NS_STAGING}" -o jsonpath='{.metadata.uid}' --ignore-not-found=true)"  \
-		||  kubectl delete namespace jb-chat-staging
+deploy-kctl-prod: deploy-kctl
+run-kctl-prod: build-container deploy-kctl
+
+deploy-kctl-staging: deploy-kctl
+run-kctl-staging: build-container deploy-kctl
+
+deploy-k8sh-prod: deploy-k8sh
+run-k8sh-prod: build-container deploy-k8sh
+
+deploy-k8sh-staging: deploy-k8sh
+run-k8sh-staging: build-container deploy-k8sh
+
+
+stop-prod: stop-kctl
+stop-staging: stop-kctl
+

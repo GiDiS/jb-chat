@@ -25,21 +25,40 @@ cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make run-host-prod
 Listen at http://localhost:8888 for ui
 Listen at http://localhost:8889 for diagnostic
 
-## Run in minikube (minikube required)
+## Run in minikube with kubectl (minikube required)
 
 Staging: Seeded with GoT data set
 
 ```shell
-cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make run-staging
+cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make run-kctl-staging
 ```
 
 Production: Run with empty database
 
 ```shell
-cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make run-production
+cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make run-kctl-production
 ```
 
-Service urls printed after deploy
+Service and ingress urls printed after deploy
+
+
+## Run in minikube with k8s-handle ([k8s-handle](https://github.com/2gis/k8s-handle) required)
+
+k8s-handle config locates in **deploy/k8s-handle/config.yaml**
+
+Staging: Seeded with GoT data set
+
+```shell
+cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make run-k8sh-staging
+```
+
+Production: Run with empty database
+
+```shell
+cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make run-k8sh-production
+```
+
+Service and ingress urls printed after deploy
 
 ## Stop in minikube (minikube required)
 Stop completely remove deploy namespace 
@@ -64,8 +83,8 @@ cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make stop-production
 * Back: Persistent storage
 * Back: Tests
 * Back: Metrics
-* Deploy: helm chart
-* Deploy: minikube deploy with ingress for stable google sign-in
+* ~~Deploy: helm chart~~ Used k8s-handle
+* ~~Deploy: minikube deploy with ingress for stable google sign-in~~
 
 ## App arch
 
