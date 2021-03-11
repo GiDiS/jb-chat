@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ app_name }}-conf
+data:
+  # ENV VARS HERE
+  PORT: "{{ app_port }}"
+  DIAG_PORT: "{{ diag_port }}"
+  SEED: "{{ env.SEED | default('0') }}"
+{% if postgres.enabled  %}
+  POSTGRES_HOST: "{{ postgres.host | default("postgres") }}"
+  POSTGRES_PORT: "{{ postgres.port | default("5432") }}"
+  POSTGRES_DB: "{{ postgres.db }}"
+  POSTGRES_USER: "{{ postgres.user }}"
+  POSTGRES_PASSWORD: "{{ postgres.password }}"
+{% endif %}

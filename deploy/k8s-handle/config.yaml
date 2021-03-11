@@ -18,6 +18,26 @@ common:
   ingress:
     host: jb-chat.cluster.info
 
+  templates:
+    - template: app-configmap.yaml.j2
+    - template: app-deployment.yaml.j2
+    - template: app-service.yaml.j2
+    - template: app-ingress.yaml.j2
+    - template: postgres-configmap.yaml.j2
+    - template: postgres-storage.yaml.j2
+    - template: postgres-deployment.yaml.j2
+    - template: postgres-service.yaml.j2
+
+  postgres:
+    enabled: true
+    selfhosted: true
+    image: postgres:10.4
+    host: postgres
+    port: 5432
+    db: postgresdb
+    user: postgresadmin
+    password: postgrespasswd
+
 staging:
   k8s_namespace: jb-chat-staging
   image_path: jb-chat-staging
@@ -28,21 +48,9 @@ staging:
   ingress:
     host: jb-chat-staging.cluster.info
 
-  templates:
-    - template: configmap.yaml.j2
-    - template: deployment.yaml.j2
-    - template: service.yaml.j2
-    - template: ingress.yaml.j2
-
 production:
   image_path: jb-chat-prod
   replicas_count: 1 # Increase after release distributed mode
 
   app_node_port: 30898
   diag_node_port: 30899
-
-  templates:
-    - template: configmap.yaml.j2
-    - template: deployment.yaml.j2
-    - template: service.yaml.j2
-    - template: ingress.yaml.j2
