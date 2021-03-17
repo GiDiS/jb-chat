@@ -34,7 +34,7 @@ func (s *channelsMemoryStore) CreateDirect(ctx context.Context, uidA models.Uid,
 	s.channels[cid] = models.Channel{
 		Cid:          cid,
 		Title:        models.DirectTitle(uidA, uidB),
-		LastMsg:      models.NoMessage,
+		LastMsgId:    models.NoMessage,
 		MembersCount: 1,
 		Type:         models.ChannelTypeDirect,
 	}
@@ -71,7 +71,7 @@ func (s *channelsMemoryStore) CreatePublic(ctx context.Context, authorUid models
 	s.channels[cid] = models.Channel{
 		Cid:          cid,
 		Title:        title,
-		LastMsg:      models.NoMessage,
+		LastMsgId:    models.NoMessage,
 		MembersCount: 1,
 		Type:         models.ChannelTypePublic,
 	}

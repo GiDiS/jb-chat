@@ -30,7 +30,7 @@ func (c *channelsImpl) GetDirect(ctx context.Context, uid models.Uid, request Ch
 	selfUid := uid
 
 	directId, err := c.channelsStore.GetDirect(ctx, selfUid, toUid)
-	if err != nil {
+	if err != nil && err != store.ErrChanNotFound {
 		return resp, err
 	}
 	if directId == models.NoChannel {

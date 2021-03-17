@@ -19,6 +19,7 @@ type sessImpl struct {
 	logger           logger.Logger
 	sessionsStore    store.SessionsStore
 	usersOnlineStore store.UsersOnlineStore
+	usersStore       store.UsersStore
 	sessions         map[string]models.Uid
 }
 
@@ -26,11 +27,13 @@ func NewSessions(
 	logger logger.Logger,
 	sessionsStore store.SessionsStore,
 	usersOnlineStore store.UsersOnlineStore,
+	usersStore store.UsersStore,
 ) *sessImpl {
 	return &sessImpl{
 		logger:           logger,
 		sessionsStore:    sessionsStore,
 		usersOnlineStore: usersOnlineStore,
+		usersStore:       usersStore,
 		sessions:         make(map[string]models.Uid, 0),
 	}
 }

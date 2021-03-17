@@ -24,6 +24,15 @@ func MakeSeeder(ctx context.Context, appStore store.AppStore) (*Seeder, error) {
 }
 
 func (s *Seeder) fill(ctx context.Context) error {
+	usersStore := s.store.Users()
+
+	user, err := usersStore.GetByEmail(ctx, "tyrion.lannister@lannister.got")
+	if err != nil && err != store.ErrUserNotFound {
+		return err
+	} else if user.UserId > 0 {
+		return nil
+	}
+
 	chars, err := FetchCharacters()
 	if err != nil {
 		return err
@@ -36,10 +45,11 @@ func (s *Seeder) fill(ctx context.Context) error {
 
 	users := BuildUsers(chars)
 
-	usersStore := s.store.Users()
-	for _, u := range users {
-		if _, err := usersStore.Save(ctx, u); err != nil {
+	for uIdx, u := range users {
+		if uid, err := usersStore.Save(ctx, u); err != nil {
 			return err
+		} else {
+			users[uIdx].UserId = uid
 		}
 	}
 
@@ -52,13 +62,17 @@ func (s *Seeder) fill(ctx context.Context) error {
 		chUsers, _ := channelsUsers[ch.Cid]
 		chMessages, _ := channelsMessages[ch.Cid]
 
-		_, _ = channelsStore.CreatePublic(ctx, models.NoUser, ch.Title)
+		cid, err := channelsStore.CreatePublic(ctx, models.NoUser, ch.Title)
+		if err != nil {
+			return err
+		}
 
 		for uid := range chUsers {
-			_ = membersStore.Join(ctx, ch.Cid, uid)
+			_ = membersStore.Join(ctx, cid, uid)
 		}
 
 		for _, msg := range chMessages {
+			msg.ChannelId = cid
 			_, _ = messagesStore.Create(ctx, msg)
 		}
 	}

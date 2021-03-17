@@ -13,7 +13,19 @@ type Online interface {
 }
 
 func (s *sessImpl) SetOnline(ctx context.Context, sid string, uid models.Uid, isOnline bool) error {
-	return s.usersOnlineStore.SetOnline(ctx, sid, uid, isOnline)
+	err := s.usersOnlineStore.SetOnline(ctx, sid, uid, isOnline)
+	if err != nil {
+		return err
+	}
+	status := models.UserStatusOffline
+
+	if hasOnline, err := s.usersOnlineStore.IsOnline(ctx, uid); err != nil {
+		return err
+	} else if hasOnline {
+		status = models.UserStatusOnline
+	}
+	err = s.usersStore.SetStatus(ctx, uid, status)
+	return err
 }
 
 func (s *sessImpl) IsOnline(ctx context.Context, uid models.Uid) (bool, error) {

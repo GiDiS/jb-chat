@@ -34,7 +34,7 @@ func NewDispatcher(c Container) *Dispatcher {
 		authUc:     authUc.NewAuth(c.Logger, c.Store.Users()),
 		channelsUc: channelsUc.NewChannels(c.Logger, c.Store.Channels(), c.Store.Members(), c.Store.Users()),
 		messagesUc: messagesUc.NewMessages(c.Logger, c.Store.Messages(), c.Store.Users()),
-		sessionsUc: sessionsUc.NewSessions(c.Logger, c.Store.Sessions(), c.Store.OnlineUsers()),
+		sessionsUc: sessionsUc.NewSessions(c.Logger, c.Store.Sessions(), c.Store.OnlineUsers(), c.Store.Users()),
 		usersUc:    usersUc.NewUsers(c.Logger, c.Store.Users()),
 	}
 	d.init()

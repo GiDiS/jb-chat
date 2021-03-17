@@ -8,12 +8,13 @@ import (
 	"github.com/GiDiS/jb-chat/pkg/logger"
 	"github.com/GiDiS/jb-chat/pkg/store"
 	"github.com/GiDiS/jb-chat/pkg/store/memory"
+	"github.com/GiDiS/jb-chat/pkg/store/postgres"
+	"github.com/GiDiS/jb-chat/pkg/store/postgres/migration"
 	"github.com/GiDiS/jb-chat/pkg/store/seed"
 )
 
 type Container struct {
 	Config           config.Config
-	logger           logger.Logger
 	Logger           logger.Logger
 	Store            store.AppStore
 	WsTransport      handlers_ws.WsApi
@@ -30,10 +31,26 @@ func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
 		EventsResolver: events.DefaultResolver,
 	}
 
-	c.Store = memory.NewAppStore()
+	if c.Config.DSN != "" {
+		db := postgres.ConnectToDB("postgres", c.Config.DSN, c.Logger)
+		migration.MustMigrate(db)
+		appStore, err := postgres.NewAppStore(db)
+		if err != nil {
+			log.Fatalf("Failed init store", err)
+		}
+
+		c.Store = appStore
+	} else {
+		c.Store = memory.NewAppStore()
+	}
 
 	if cfg.Seed {
-		_, _ = seed.MakeSeeder(context.Background(), c.Store)
+		c.Logger.Debug("Start seeding")
+		_, err := seed.MakeSeeder(context.Background(), c.Store)
+		if err != nil {
+			c.Logger.Fatalf("Seeding failed: %v", err)
+		}
+		c.Logger.Debug("Finish seeding")
 	}
 
 	c.WsTransport = handlers_ws.NewWsTransport(c.EventsResolver, c.Logger)

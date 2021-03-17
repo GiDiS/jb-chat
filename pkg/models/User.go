@@ -11,11 +11,11 @@ const ToConnection Uid = -2
 type Email string
 
 type User struct {
-	UserId    Uid    `json:"uid"`
-	Nickname  string `json:"nickname"`
-	Title     string `json:"title"`
-	Email     string `json:"email"`
-	AvatarUrl string `json:"avatarUrl"`
+	UserId    Uid    `json:"uid" db:"uid"`
+	Nickname  string `json:"nickname" db:"nickname"`
+	Title     string `json:"title" db:"title"`
+	Email     string `json:"email" db:"email"`
+	AvatarUrl string `json:"avatarUrl" db:"avatar_url"`
 }
 
 func (uid Uid) String() string {

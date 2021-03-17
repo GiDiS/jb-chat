@@ -6,11 +6,12 @@ import (
 )
 
 type Config struct {
-	PublicPort int  `env:"PORT"`
-	DiagPort   int  `env:"DIAG_PORT"`
-	Seed       bool `env:"SEED"` // Seed this GoT dataset
-	Metrics    bool `env:"METRICS_ENABLED"`
-	Pprof      bool `env:"PPROF_ENABLED"`
+	PublicPort int    `env:"PORT"`
+	DiagPort   int    `env:"DIAG_PORT"`
+	Seed       bool   `env:"SEED"` // Seed this GoT dataset
+	Metrics    bool   `env:"METRICS_ENABLED"`
+	Pprof      bool   `env:"PPROF_ENABLED"`
+	DSN        string `env:"DSN"`
 }
 
 func MustBuild(log logger.Logger) Config {

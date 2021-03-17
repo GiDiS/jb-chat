@@ -121,10 +121,28 @@ func FetchEpisodes() ([]Episode, error) {
 
 func BuildUsers(characters []Character) []models.User {
 	users := make([]models.User, 0, len(characters))
-
-	for idx, ch := range characters {
+	emails := make(map[string]bool, len(characters))
+	for _, ch := range characters {
 		user := makeUser(ch)
-		user.UserId = models.Uid(idx + 1)
+		if user.Email == "" {
+			continue
+		}
+
+		if _, ok := emails[user.Email]; ok {
+			if parts := strings.SplitN(user.Email, "@", 2); len(parts) == 2 {
+				idx := 0
+				for {
+					email := fmt.Sprintf("%s%d@%s", parts[0], idx, parts[1])
+					if _, ok := emails[email]; !ok {
+						user.Email = email
+						break
+					}
+					idx++
+				}
+			}
+		}
+		emails[user.Email] = true
+		//user.UserId = models.Uid(idx + 1)
 		users = append(users, user)
 	}
 	return users
@@ -167,7 +185,7 @@ func makeChannels(users []models.User, episodes []Episode) (
 		msgSeq := 1
 		for _, txt := range ep.Items {
 			msgId := models.MessageId(msgSeq)
-			ch.LastMsg = msgId
+			ch.LastMsgId = msgId
 			uid := models.NoUser
 			msgSeq++
 
@@ -189,8 +207,8 @@ func makeChannels(users []models.User, episodes []Episode) (
 		}
 		if l := len(channelMessages) - 1; l >= 0 {
 			last := channelMessages[l]
-			ch.LastMsgAt = last.Created
-			ch.LastMsg = last.MsgId
+			ch.LastMsgAt = &last.Created
+			ch.LastMsgId = last.MsgId
 		}
 		ch.MembersCount = len(channelUsers)
 		channels = append(channels, ch)

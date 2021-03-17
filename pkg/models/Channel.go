@@ -27,13 +27,14 @@ const (
 )
 
 type Channel struct {
-	Cid          ChannelId   `json:"cid"`
-	OwnerId      Uid         `json:"owner_id"`
-	Title        string      `json:"title"`
-	LastMsg      MessageId   `json:"last_msg_id"`
-	LastMsgAt    time.Time   `json:"last_msg_at"`
-	MembersCount int         `json:"members_count"`
-	Type         ChannelType `json:"type"`
+	Cid          ChannelId   `json:"cid" db:"cid"`
+	Type         ChannelType `json:"type" db:"type"`
+	Title        string      `json:"title"  db:"title"`
+	Created      time.Time   `json:"created" db:"created"`
+	OwnerUid     Uid         `json:"owner_uid"  db:"owner_uid"`
+	LastMsgId    MessageId   `json:"last_msg_id" db:"last_msg_id"`
+	LastMsgAt    *time.Time  `json:"last_msg_at" db:"last_msg_at"`
+	MembersCount int         `json:"members_count" db:"members_count"`
 }
 
 type ChannelMembers struct {

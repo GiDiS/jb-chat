@@ -19,7 +19,7 @@ func NewSessionsMemoryStore() *sessionsMemoryStore {
 }
 
 func (s *sessionsMemoryStore) GetUserSessions(ctx context.Context, uid models.Uid) ([]models.Session, error) {
-	list := make([]models.Session, len(s.sessions))
+	list := make([]models.Session, 0, len(s.sessions))
 	for _, sess := range s.sessions {
 		if sess.UserId == uid {
 			list = append(list, sess)
@@ -29,7 +29,7 @@ func (s *sessionsMemoryStore) GetUserSessions(ctx context.Context, uid models.Ui
 }
 
 func (s *sessionsMemoryStore) GetSessions(ctx context.Context) ([]models.Session, error) {
-	list := make([]models.Session, len(s.sessions))
+	list := make([]models.Session, 0, len(s.sessions))
 	for _, sess := range s.sessions {
 		list = append(list, sess)
 	}
@@ -47,7 +47,7 @@ func (s *sessionsMemoryStore) GetSession(ctx context.Context, sid string) (model
 		return models.Session{
 			SessionId: sid,
 			Started:   now,
-			Update:    now,
+			Updated:   now,
 			IsOnline:  false,
 		}, nil
 	}
@@ -73,7 +73,7 @@ func (s *sessionsMemoryStore) SetOnline(ctx context.Context, sid string, uid mod
 		return err
 	}
 	if isOnline {
-		sess.Update = time.Now()
+		sess.Updated = time.Now()
 		sess.IsOnline = true
 	} else {
 		sess.IsOnline = false
