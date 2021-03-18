@@ -31,8 +31,9 @@ func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
 		EventsResolver: events.DefaultResolver,
 	}
 
-	if c.Config.DSN != "" {
-		db := postgres.ConnectToDB("postgres", c.Config.DSN, c.Logger)
+	if c.Config.GetStore() == config.StorePostgres {
+		dbConfig := postgres.MustGetConfig(c.Logger)
+		db := postgres.ConnectToDB("postgres", dbConfig.Dsn(), c.Logger)
 		migration.MustMigrate(db)
 		appStore, err := postgres.NewAppStore(db)
 		if err != nil {

@@ -10,12 +10,12 @@ import (
 )
 
 type Config struct {
-	DbDriver   string `env:"DB_DRIVER"`
-	DbHost     string `env:"DB_HOST"`
-	DbPort     int    `env:"DB_PORT"`
-	DbUser     string `env:"DB_USER"`
-	DbPassword string `env:"DB_PASSWORD"`
-	DbName     string `env:"DB_NAME"`
+	DbDriver   string `env:"DB_DRIVER" envDefault:"postgres"`
+	DbHost     string `env:"DB_HOST,required"`
+	DbPort     int    `env:"DB_PORT,required" envDefault:"5432"`
+	DbUser     string `env:"DB_USER,required"`
+	DbPassword string `env:"DB_PASSWORD,required"`
+	DbName     string `env:"DB_NAME,required"`
 }
 
 func MustGetConfig(log logger.Logger) Config {
@@ -23,8 +23,8 @@ func MustGetConfig(log logger.Logger) Config {
 		DbDriver:   "postgres",
 		DbHost:     "db",
 		DbPort:     5432,
-		DbUser:     "root",
-		DbPassword: "123",
+		DbUser:     "",
+		DbPassword: "",
 		DbName:     "jb_chat",
 	}
 	if err := env.Parse(&config); err != nil {
@@ -36,8 +36,8 @@ func MustGetConfig(log logger.Logger) Config {
 
 func (cfg Config) Dsn() string {
 	return fmt.Sprintf(
-		"postgres://%s:%s@tcp(%s:%d)/%s",
-		cfg.DbUser, cfg.DbPassword, cfg.DbHost, cfg.DbPort, cfg.DbName,
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbName,
 	)
 }
 
