@@ -14,20 +14,11 @@ NS_STAGING:=jb-chat-staging
 IMAGE_NAME:=jb-chat
 IMAGE_VERSION:=0.1
 
-%-prod: APP_ENV = production
-%-prod: IMAGE_NAME = jb-chat-prod
-%-prod: IMAGE_VERSION = 0.1
-%-prod: NS := $(NS_PROD)
-
-%-staging: APP_ENV = staging
-%-staging: IMAGE_NAME = jb-chat-staging
-%-staging: IMAGE_VERSION = 0.1
-%-staging: NS := $(NS_STAGING)
-
 GIT_COMMIT := $(shell git rev-parse --short=7 HEAD)
 
 BUILDDIR:=$(realpath .)
 BUILDDATE:=$(shell date --rfc-3339=seconds)
+BUILDTS:=$(shell date +%s)
 
 GITHASH:=$(shell git log --pretty=format:'%h' -n 1)
 ifeq ("${GITHASH}", "")
@@ -38,6 +29,16 @@ RELEASE:=$(shell git describe --tags 2>/dev/null)
 ifeq ("${RELEASE}", "")
 	RELEASE:=unknown
 endif
+
+%-prod: APP_ENV = production
+%-prod: IMAGE_NAME = jb-chat-prod
+%-prod: IMAGE_VERSION := 0.1
+%-prod: NS := $(NS_PROD)
+
+%-staging: APP_ENV = staging
+%-staging: IMAGE_NAME = jb-chat-staging
+%-staging: IMAGE_VERSION = $(GITHASH)-$(BUILDTS)
+%-staging: NS := $(NS_STAGING)
 
 all: clean deps test build
 

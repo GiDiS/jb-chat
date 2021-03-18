@@ -19,19 +19,19 @@ common:
     host: jb-chat.cluster.info
 
   templates:
-    - template: app-configmap.yaml.j2
-    - template: app-deployment.yaml.j2
-    - template: app-service.yaml.j2
-    - template: app-ingress.yaml.j2
     - template: postgres-configmap.yaml.j2
     - template: postgres-storage.yaml.j2
     - template: postgres-deployment.yaml.j2
     - template: postgres-service.yaml.j2
+    - template: app-configmap.yaml.j2
+    - template: app-deployment.yaml.j2
+    - template: app-service.yaml.j2
+    - template: app-ingress.yaml.j2
 
   postgres:
     enabled: true
     selfhosted: true
-    image: postgres:10.4
+    image: postgres:12
     host: postgres
     port: 5432
     db: postgresdb

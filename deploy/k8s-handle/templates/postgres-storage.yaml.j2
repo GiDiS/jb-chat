@@ -7,7 +7,6 @@ metadata:
     type: local
     app: postgres
 spec:
-  storageClassName: manual
   capacity:
     storage: 2Gi
   accessModes:
@@ -22,7 +21,6 @@ metadata:
   labels:
     app: postgres
 spec:
-  storageClassName: manual
   accessModes:
     - ReadWriteMany
   resources:
