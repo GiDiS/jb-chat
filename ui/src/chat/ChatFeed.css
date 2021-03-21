@@ -16,7 +16,7 @@
 
 .ui.circular.button.scrollDownHandler {
     position: absolute;
-    z-index: 20;
+    z-index: 200;
     bottom: 1rem;
     right: 1rem;
 }

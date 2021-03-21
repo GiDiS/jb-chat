@@ -1,8 +1,10 @@
 package config
 
 import (
+	"github.com/GiDiS/jb-chat/pkg/auth"
 	"github.com/GiDiS/jb-chat/pkg/logger"
 	"github.com/caarlos0/env"
+	"golang.org/x/oauth2"
 	"strings"
 )
 
@@ -16,6 +18,8 @@ type Config struct {
 	Seed       bool   `env:"SEED"`  // Seed with GoT dataset
 	Metrics    bool   `env:"METRICS_ENABLED"`
 	Pprof      bool   `env:"PPROF_ENABLED"`
+
+	GoogleAuth oauth2.Config
 }
 
 func MustBuild(log logger.Logger) Config {
@@ -30,6 +34,8 @@ func MustBuild(log logger.Logger) Config {
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("Config build failed: %v", err)
 	}
+
+	cfg.GoogleAuth = auth.GetConfig()
 
 	return cfg
 }

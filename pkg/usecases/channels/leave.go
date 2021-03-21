@@ -10,5 +10,11 @@ func (c *channelsImpl) Leave(ctx context.Context, uid models.Uid, request Channe
 		resp.SetFailed(err)
 		return resp, err
 	}
+
+	if err := c.channelsStore.IncMembersCount(ctx, request.ChannelId, -1); err != nil {
+		resp.SetFailed(err)
+		return resp, err
+	}
+
 	return c.getChan(ctx, request.ChannelId)
 }

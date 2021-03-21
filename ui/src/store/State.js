@@ -2,12 +2,14 @@ import {action, makeObservable, observable, runInAction} from 'mobx'
 import User from "./User";
 import Channel from "./Channel";
 import Message from "./Message";
+import Config from "./Config";
 
 
 class State {
 
     // @var Socket
     socket = null;
+    config = new Config();
     pingTimer = null;
     pingEnabled = true;
     lastPing = null;
@@ -17,6 +19,7 @@ class State {
     users = {};
     channels = [];
     directs = {};
+    lastSeen = {};
     activeChannelId = null;
     activeChannel = null;
     channelFixed = null;
@@ -24,8 +27,6 @@ class State {
     channelsLoaded = false
     usersLoaded = false
     chatLoading = false
-    chatLoaded = false
-
 
     startPing = (period = 1000) => {
         if (this.pingTimer === null) {
@@ -52,6 +53,16 @@ class State {
 
     setOnline = (isOnline = false) => {
         this.isOnline = isOnline
+    }
+
+
+    loadConfig = async () => {
+        const config = await this.socket.getConfig()
+        runInAction(() => {
+            this.config = config
+        })
+
+        return config
     }
 
     setUser = (userData = {}) => {
@@ -109,6 +120,9 @@ class State {
         this.getActiveChannel(cid).then((chan) => {
             runInAction(() => {
                 this.activeChannel = chan
+                if (chan) {
+                    chan.update({lastMessage: null})
+                }
             })
         })
     }
@@ -216,6 +230,20 @@ class State {
     getChannelMessages = (cid, filter = {}) => {
         filter['cid'] = cid
         return this.getMessages(filter)
+    }
+
+    getChannelLastSeen = (cid) => {
+        return this.socket.channelGetLastSeen({cid})
+    }
+
+    setChannelLastSeen = (cid, mid) => {
+        if ((this.lastSeen[cid] || 0) >= mid) {
+            return
+        }
+        this.lastSeen[cid] = mid
+        return this.socket.channelSetLastSeen({cid, mid}).catch(() => {
+            delete this.lastSeen[cid];
+        })
     }
 
     getMessages = (filter = {}) => {
@@ -369,6 +397,13 @@ class State {
         return me
     }
 
+    signIn = () => {
+        let token = this.getToken()
+        if (token) {
+            this.signInToken({token})
+        }
+    }
+
     signOut = () => {
         this.socket.signOut().then(() => {
             this.resetAuth()
@@ -402,6 +437,7 @@ class State {
             pingEnabled: observable,
             lastPing: observable,
             isOnline: observable,
+            config: observable,
             user: observable,
             token: observable,
             users: observable,
@@ -410,15 +446,16 @@ class State {
             activeChannel: observable,
             channelFixed: observable,
             chatLoading: observable,
-            chatLoaded: observable,
             getUser: observable,
             startPing: action,
             stopPing: action,
             setLastPing: action,
             setOnline: action,
+            loadConfig: action,
             signInGoogle: action,
             signInToken: action,
             signInTyrion: action,
+            signIn: action,
             signOut: action,
             resetAuth: action,
             getToken: action,
@@ -439,6 +476,8 @@ class State {
             updateChannel: action,
             leaveChannel: action,
             addMessage: action,
+            getChannelLastSeen: action,
+            setChannelLastSeen: action,
             likeMessage: action,
             mergeMessages: action,
         });

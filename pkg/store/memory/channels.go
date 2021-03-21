@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 type channelsMemoryStore struct {
@@ -14,6 +15,7 @@ type channelsMemoryStore struct {
 	messages      map[models.ChannelId][]models.Message
 	members       map[models.ChannelId]map[models.Uid]bool
 	usersChannels map[models.Uid]map[models.ChannelId]bool
+	lastSeen      map[models.ChannelId]map[models.Uid]models.MessageId
 	lastCid       models.ChannelId
 	rwMx          sync.RWMutex
 }
@@ -23,6 +25,7 @@ func NewChannelsMemoryStore() *channelsMemoryStore {
 		usersChannels: make(map[models.Uid]map[models.ChannelId]bool),
 		channels:      make(map[models.ChannelId]models.Channel),
 		members:       make(map[models.ChannelId]map[models.Uid]bool),
+		lastSeen:      make(map[models.ChannelId]map[models.Uid]models.MessageId),
 	}
 }
 
@@ -34,6 +37,7 @@ func (s *channelsMemoryStore) CreateDirect(ctx context.Context, uidA models.Uid,
 	s.channels[cid] = models.Channel{
 		Cid:          cid,
 		Title:        models.DirectTitle(uidA, uidB),
+		Created:      time.Now(),
 		LastMsgId:    models.NoMessage,
 		MembersCount: 1,
 		Type:         models.ChannelTypeDirect,
@@ -71,6 +75,7 @@ func (s *channelsMemoryStore) CreatePublic(ctx context.Context, authorUid models
 	s.channels[cid] = models.Channel{
 		Cid:          cid,
 		Title:        title,
+		Created:      time.Now(),
 		LastMsgId:    models.NoMessage,
 		MembersCount: 1,
 		Type:         models.ChannelTypePublic,
@@ -192,6 +197,31 @@ func (s *channelsMemoryStore) channelMatch(ch *models.Channel, filter store.Chan
 	return true
 }
 
+func (s *channelsMemoryStore) SetLastMessage(ctx context.Context, cid models.ChannelId, mid models.MessageId, at time.Time) error {
+	s.rwMx.Lock()
+	defer s.rwMx.Unlock()
+	if ch, ok := s.channels[cid]; ok {
+		return store.ErrChanNotFound
+	} else {
+		ch.LastMsgId = mid
+		at := at // make local copy
+		ch.LastMsgAt = &at
+		ch.MessagesCount++
+	}
+	return nil
+}
+
+func (s *channelsMemoryStore) IncMembersCount(ctx context.Context, cid models.ChannelId, members int) error {
+	s.rwMx.Lock()
+	defer s.rwMx.Unlock()
+	if ch, ok := s.channels[cid]; ok {
+		return store.ErrChanNotFound
+	} else {
+		ch.MembersCount += members
+	}
+	return nil
+}
+
 func (s *channelsMemoryStore) Members(_ context.Context, cid models.ChannelId) ([]models.Uid, error) {
 	s.rwMx.RLock()
 	defer s.rwMx.RUnlock()
@@ -279,4 +309,30 @@ func (s *channelsMemoryStore) Leave(ctx context.Context, cid models.ChannelId, u
 	delete(s.usersChannels[uid], cid)
 
 	return nil
+}
+
+func (s *channelsMemoryStore) SetLastSeen(ctx context.Context, cid models.ChannelId, uid models.Uid, mid models.MessageId) error {
+	s.rwMx.Lock()
+	defer s.rwMx.Unlock()
+
+	if _, ok := s.lastSeen[cid]; !ok {
+		s.lastSeen[cid] = make(map[models.Uid]models.MessageId)
+	}
+	s.lastSeen[cid][uid] = mid
+
+	return nil
+}
+
+func (s *channelsMemoryStore) GetLastSeen(ctx context.Context, cid models.ChannelId, uid models.Uid) (msgId models.MessageId, err error) {
+	s.rwMx.RLock()
+	defer s.rwMx.RUnlock()
+	if _, ok := s.lastSeen[cid]; !ok {
+		return models.NoMessage, store.ErrChanNotFound
+	}
+
+	if last, ok := s.lastSeen[cid][uid]; !ok {
+		return models.NoMessage, store.ErrChanNotFound
+	} else {
+		return last, nil
+	}
 }

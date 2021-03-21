@@ -156,8 +156,10 @@ func (a *wsTransport) onConnect(client *WsClient) {
 
 func (a *wsTransport) onDisconnect(client *WsClient) {
 	if _, ok := a.clients[client]; ok {
+		a.mx.Lock()
 		delete(a.clients, client)
 		delete(a.connections, client.GetId())
+		a.mx.Unlock()
 
 		client.MarkDisconnected()
 		a.logger.Debugf("Disconnected: %s", client.GetId())
@@ -191,13 +193,17 @@ func (a *wsTransport) onBusRecv(event events.Event) {
 
 	switch event.To.Type {
 	case events.DestinationBroadcast:
+		a.mx.Lock()
 		for client := range a.clients {
 			a.onDirect(client, event)
 		}
+		a.mx.Unlock()
 	case events.DestinationConnection:
+		a.mx.Lock()
 		if client, ok := a.connections[event.To.Addr]; ok {
 			a.onDirect(client, event)
 		}
+		a.mx.Unlock()
 	case events.DestinationNoop:
 		// do nothing
 	default:

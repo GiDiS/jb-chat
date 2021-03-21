@@ -10,5 +10,11 @@ func (c *channelsImpl) Join(ctx context.Context, uid models.Uid, request Channel
 		resp.SetFailed(err)
 		return resp, err
 	}
+
+	if err := c.channelsStore.IncMembersCount(ctx, request.ChannelId, 1); err != nil {
+		resp.SetFailed(err)
+		return resp, err
+	}
+
 	return c.getChan(ctx, request.ChannelId)
 }

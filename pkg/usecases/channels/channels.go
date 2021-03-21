@@ -16,6 +16,8 @@ type Channels interface {
 	Delete(ctx context.Context, uid models.Uid, request ChannelsDeleteRequest) (resp ChannelsOneResult, err error)
 	Leave(ctx context.Context, uid models.Uid, request ChannelsLeaveRequest) (resp ChannelsOneResult, err error)
 	Join(ctx context.Context, uid models.Uid, request ChannelsJoinRequest) (resp ChannelsOneResult, err error)
+	GetLastSeen(ctx context.Context, cid models.ChannelId, uid models.Uid) (models.MessageId, error)
+	SetLastSeen(ctx context.Context, cid models.ChannelId, uid models.Uid, mid models.MessageId) error
 }
 
 type channelsImpl struct {

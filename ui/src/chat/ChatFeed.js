@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useState} from 'react'
 import {Button, Feed} from 'semantic-ui-react'
 import './ChatFeed.css'
 import {StateContext} from '../store/StateContext'
@@ -7,8 +7,7 @@ import {observer} from "mobx-react";
 import {Link} from "react-router-dom";
 
 const ChatFeedEvent = (msg, msgIdx, self) => {
-    let {images,user} = msg;
-    // let likesCnt = likes.length
+    let {images, user} = msg;
     let created = msg.at ? new Date(msg.at) : null;
     return user ? (
         <Feed.Event key={'msg-' + msgIdx} className={self ? 'self' : null}>
@@ -48,52 +47,85 @@ class ChatFeed extends React.Component {
         this.feedRef = React.createRef()
     }
 
-    componentDidMount() {
-        this.updateScrollDown()
-    }
-
-    updateScrollDown = () => {
+    scrollToLast = () => {
+        let feed = null;
         if (this.feedRef.current) {
-            Object.values(this.feedRef.current.children).forEach(e => {
-                if (e.classList.contains('feed')) {
-                    if (e.clientHeight < e.scrollHeight && e.scrollTop < e.scrollHeight ) {
-                        this.setState({showScrollDown: true})
-                    }
-                }
-            })
+            feed = this.feedRef.current.getElementsByClassName('feed')[0] || null
+        }
+        if (!feed) return false;
+        let last = feed.children.length ? feed.children[feed.children.length - 1] : null;
+        if (last) {
+            last.scrollIntoView({block: "center", behavior: "smooth"});
+            this.setLastSeen()
         }
     }
 
-    scrollDown = (e) => {
-        Object.values(this.feedRef.current.children).forEach(e => {
-            if (e.classList.contains('feed')) {
-                if (e.clientHeight < e.scrollHeight && e.scrollTop < e.scrollHeight ) {
-                    e.scrollTop = e.scrollHeight
-                    this.setState({showScrollDown: false})
-                }
-            }
-        })
+    setLastSeen = () => {
+        let {messages,} = this.props
+        if (messages.length) {
+            let lastMsg = messages[messages.length-1]
+            this.context.setChannelLastSeen(lastMsg.cid, lastMsg.mid)
+        }
     }
 
+
     render() {
-        let {messages, } = this.props
-        let {showScrollDown} = this.state
+        let {messages,} = this.props
         let {user} = this.context
         messages = messages || []
         let events = messages.map((msg, idx) => ChatFeedEvent(msg, idx, user && msg.uid === user.uid))
+        setTimeout(() => {
+            if (messages.length && messages[messages.length - 1].uid === user.uid) {
+                this.scrollToLast()
+            }
+        }, 500)
         return (
             <div ref={this.feedRef} className='chatFeedContainer'>
-                {showScrollDown ? (
-                    <Button className='scrollDownHandler' circular icon='angle down' size='big'
-                            onClick={this.scrollDown}/>
-                ) : null}
                 <Feed>
                     {events}
                 </Feed>
+                <ScrollDown feedRef={this.feedRef} scrollToLast={this.scrollToLast}/>
             </div>
         )
 
     }
+}
+
+const ScrollDown = ({feedRef, scrollToLast}) => {
+    let feed = null;
+    if (feedRef.current) {
+        feed = feedRef.current.getElementsByClassName('feed')[0] || null
+    }
+    const checkScrollTop = () => {
+        if (!feed) return false;
+        return feed.clientHeight < feed.scrollHeight && (feed.scrollHeight - feed.scrollTop - feed.clientHeight) > 50
+    };
+
+    const [showScrollDown, setShowScroll] = useState(checkScrollTop())
+    if (!feedRef) {
+        return null
+    }
+
+    const updateScrollTop = (e) => {
+        setShowScroll(checkScrollTop())
+    }
+
+    const scrollDown = () => {
+        scrollToLast()
+        setShowScroll(false)
+    }
+
+    if (feed) {
+        feed.addEventListener('scroll', updateScrollTop)
+    }
+
+    setInterval(updateScrollTop, 1000)
+
+    let display = showScrollDown ? 'flex' : 'none';
+    return (
+        <Button className='scrollDownHandler' circular icon='angle down' size='big' onClick={scrollDown}
+                style={{display: display}}/>
+    );
 }
 
 ChatFeed.contextType = StateContext

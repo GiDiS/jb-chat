@@ -116,7 +116,7 @@ func (s *channelsPostgresStore) Get(ctx context.Context, cid models.ChannelId) (
 
 func (s *channelsPostgresStore) Find(ctx context.Context, filter store.ChannelsSearchCriteria) (list []models.Channel, err error) {
 	err = utils.InReadOnlyTransactionX(s.db, ctx, func(ctx context.Context, tx *sqlx.Tx) error {
-		fields := []string{"cid", "title", "type", "owner_uid", "last_msg_id", "last_msg_at", "members_count"}
+		fields := []string{"cid", "title", "type", "owner_uid", "last_msg_id", "last_msg_at", "members_count", "messages_count"}
 		query, args, buildErr := s.buildFind(fields, filter, true)
 		if err != nil {
 			return buildErr
@@ -146,6 +146,26 @@ func (s *channelsPostgresStore) Estimate(ctx context.Context, filter store.Chann
 		return nil
 	})
 	return total, err
+}
+
+func (s *channelsPostgresStore) SetLastMessage(ctx context.Context, cid models.ChannelId, mid models.MessageId, at time.Time) error {
+	return utils.InWriteTransactionX(s.db, ctx, func(ctx context.Context, tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(ctx,
+			"UPDATE channels SET last_msg_id = $1, last_msg_at = $2, messages_count = messages_count + 1  WHERE cid = $3",
+			mid, at, cid,
+		)
+		return err
+	})
+}
+
+func (s *channelsPostgresStore) IncMembersCount(ctx context.Context, cid models.ChannelId, members int) error {
+	return utils.InWriteTransactionX(s.db, ctx, func(ctx context.Context, tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(ctx,
+			"UPDATE channels SET members_count = members_count + $1 WHERE cid = $2",
+			members, cid,
+		)
+		return err
+	})
 }
 
 func (s *channelsPostgresStore) buildFind(fields []string, filter store.ChannelsSearchCriteria, useLimit bool) (string, []interface{}, error) {
@@ -245,6 +265,30 @@ func (s *channelsPostgresStore) Leave(ctx context.Context, cid models.ChannelId,
 	return utils.InWriteTransactionX(s.db, ctx, func(ctx context.Context, tx *sqlx.Tx) error {
 		return s.leave(ctx, tx, cid, uid)
 	})
+}
+
+func (s *channelsPostgresStore) SetLastSeen(ctx context.Context, cid models.ChannelId, uid models.Uid, mid models.MessageId) error {
+	return utils.InWriteTransactionX(s.db, ctx, func(ctx context.Context, tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(ctx,
+			"UPDATE channel_members SET last_seen_id = $1, last_seen_at = $2 WHERE cid = $3 AND uid = $4",
+			cid, time.Now(), cid, uid,
+		)
+		return err
+	})
+}
+
+func (s *channelsPostgresStore) GetLastSeen(ctx context.Context, cid models.ChannelId, uid models.Uid) (msgId models.MessageId, err error) {
+	err = utils.InReadOnlyTransactionX(s.db, ctx, func(ctx context.Context, tx *sqlx.Tx) error {
+		err = tx.GetContext(ctx, &msgId,
+			"SELECT last_seen_id FROM channel_members WHERE cid = $1 AND uid = $2",
+			cid, uid,
+		)
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return err
+	})
+	return
 }
 
 func (s *channelsPostgresStore) create(ctx context.Context, tx *sqlx.Tx, c models.Channel) (models.ChannelId, error) {

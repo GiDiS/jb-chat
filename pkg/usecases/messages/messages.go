@@ -16,16 +16,19 @@ type Messages interface {
 type messagesImpl struct {
 	logger        logger.Logger
 	messagesStore store.MessagesStore
+	channelsStore store.ChannelsStore
 	usersStore    store.UsersStore
 }
 
 func NewMessages(
 	logger logger.Logger,
+	channelsStore store.ChannelsStore,
 	messagesStore store.MessagesStore,
 	usersStore store.UsersStore,
 ) *messagesImpl {
 	return &messagesImpl{
 		logger:        logger,
+		channelsStore: channelsStore,
 		messagesStore: messagesStore,
 		usersStore:    usersStore,
 	}

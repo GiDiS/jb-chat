@@ -9,5 +9,7 @@ var migrationsList []MigrationInterface
 func init() {
 	migrationsList = []MigrationInterface{
 		migrations.Migration000Init{},
+		migrations.Migration001AddChanMsgsCount{},
+		migrations.Migration001AddMemberLastSeen{},
 	}
 }

@@ -2,6 +2,7 @@ import Channel from "./Channel";
 import User from "./User";
 import Message from "./Message";
 import Ping from "./Ping";
+import Config from "./Config";
 
 class Socket {
     eventPrefix = ""
@@ -26,13 +27,16 @@ class Socket {
         this.on('users.info', this.onUserInfo)
         this.on('messages.created', this.onMessageCreated)
         this.on('channels.members', this.onChannelMembers)
+        this.getWs().then(async () => {
+            await this.state.loadConfig()
+        })
     }
 
     getWs = () => {
         // let reconnectTimer = null
         return new Promise((resolve, reject) => {
             let reconnect = () => {
-                if (this.lastTry && Date.now() - this.lastTry < 5 * 1000 * 1000) {
+                if (this.ws && this.lastTry && Date.now() - this.lastTry < 5 * 1000 * 1000) {
                     return
                 }
                 let ws
@@ -48,12 +52,10 @@ class Socket {
                 ws.onopen = (e) => {
                     this.lastTry = null
                     this.tries = 0
-
-                    // console.log('connected')
-                    // console.log(e)
-                    console.log(ws)
+                    console.log('ws connected ', ws)
                     resolve(ws)
                     this.state.setOnline(true)
+                    this.state.signIn()
                 };
 
                 ws.onmessage = e => {
@@ -64,31 +66,41 @@ class Socket {
                 ws.onerror = (err) => {
                     this.state.setOnline(false)
                     this.ws = null
-                    setTimeout(() => {
-                        reconnect();
-                    }, 1000);
+                    console.log('ws err', err)
+                    ws.close()
                 }
 
                 ws.onclose = () => {
                     this.ws = null
-                    console.log('disconnected')
+                    console.log('ws disconnected')
                     this.state.setOnline(false)
+                    setTimeout(() => {
+                        reconnect();
+                    }, 500);
                 }
 
                 this.ws = ws
             }
 
+            let waitTime = Date.now() + 2000
+            while (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+                if (Date.now() > waitTime) {
+                    break
+                }
+            }
+
             if (this.ws === null || this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING) {
+                console.log('ws reconnect', this.ws)
                 reconnect()
             } else if (this.ws.readyState === WebSocket.OPEN) {
                 resolve(this.ws)
             }
 
-            setInterval(() => {
-                if (this.ws === null || this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING) {
-                    reconnect()
-                }
-            }, 5000)
+            // setInterval(() => {
+            //     if (this.ws === null || this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING) {
+            //         reconnect()
+            //     }
+            // }, 5000)
         })
     }
 
@@ -114,7 +126,7 @@ class Socket {
     send = async (type, payload) => {
         return this.getWs().then(ws => {
             let event = {type, payload, id: this.eventPrefix + (this.eventSec++)}
-            console.log(['send', ws.readyState, event])
+            console.log(['send', event.type || '???' , event, ws.readyState,])
             ws.send(JSON.stringify(event))
             return {event}
         })
@@ -184,6 +196,20 @@ class Socket {
         })
     }
 
+    getConfig = async () => {
+        let {event} = await this.send('system.get-config', null)
+        return new Promise((resolve, reject) => {
+            this.once('system.config', (data) => {
+                let payload = data.payload || {};
+                if (!payload.ok) {
+                    reject(payload.message || 'error')
+                    return
+                }
+                resolve(new Config(payload.config || {}));
+            }, event.id)
+        })
+    }
+
     signInGoogle = async ({accessToken, secretToken, ttl = 3600}) => {
         let payload = {service: 'google', accessToken, secretToken, ttl}
         let {event} = await this.send('auth.sign-in', payload)
@@ -246,7 +272,7 @@ class Socket {
             }
         }
     }
-    onMessageCreated= (type, event, prevId) => {
+    onMessageCreated = (type, event, prevId) => {
         if (type === 'messages.created') {
             let payload = event.payload || {};
             let msg = payload.msg || null;
@@ -295,6 +321,26 @@ class Socket {
     channelLeave = async ({cid, uid}) => {
         let {event} = await this.send('channels.leave', {cid, uid})
         return this.singleChanPromise('channels.left', event)
+    }
+
+    channelSetLastSeen = async ({cid, mid}) => {
+        let {event} = await this.send('channels.set-last-seen', {cid, mid})
+        return event.payload ? event.payload.ok : event.payload.message
+    }
+
+    channelGetLastSeen = async ({cid}) => {
+        let {event} = await this.send('channels.get-last-seen', {cid})
+        return new Promise((resolve, reject) => {
+            this.once('channels.last-seen', (data) => {
+                let payload = data.payload || {};
+                if (!payload.ok) {
+                    reject(payload.message || 'error');
+                    return;
+                }
+                let {mid} = data.payload;
+                resolve({mid});
+            }, event.id)
+        })
     }
 
     singleChanPromise = (eventType, prevEvent) => {

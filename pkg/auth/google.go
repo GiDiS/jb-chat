@@ -32,6 +32,10 @@ func init() {
 	}
 }
 
+func GetConfig() oauth2.Config {
+	return *googleOauthConfig
+}
+
 func RandToken(l int) (string, error) {
 	b := make([]byte, l)
 	if _, err := rand.Read(b); err != nil {

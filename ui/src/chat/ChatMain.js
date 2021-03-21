@@ -12,7 +12,9 @@ class ChatMain extends Component {
     componentDidMount() {
         let activeChannelId = this.context.activeChannelId || null;
         if (activeChannelId) {
-            this.context.getActiveChannel(activeChannelId).then()
+            this.context.getActiveChannel(activeChannelId).then((d) => {
+                console.log(d)
+            })
         }
     }
 
@@ -59,13 +61,14 @@ class ChatMain extends Component {
         return actions
     }
 
-
-
     render() {
-        let activeChannel = this.context.activeChannel || {};
         let activeChannelId = this.context.activeChannelId || null;
+        let activeChannel = this.context.activeChannel || {};
         let chatLoading = this.context.chatLoading || false;
         let user = this.context.user;
+
+        // console.log(activeChannelId)
+        // console.log(activeChannel)
 
         const messages = activeChannel.messages || [];
         const members = activeChannel.users || [];
@@ -80,9 +83,10 @@ class ChatMain extends Component {
                     <Segment>
                         <Header>
                             <Header.Content as='strong'>
-                                <Icon name={icon} />
+                                <Icon name={icon}/>
                                 {title}
-                                <small> (cid: {activeChannel.cid || activeChannelId || ""}, members: {members.length}, messages: {messages.length})</small>
+                                <small> (cid: {activeChannel.cid || activeChannelId || ""}, members: {members.length},
+                                    messages: {messages.length})</small>
                                 {this.channelActions(activeChannel, user)}
                             </Header.Content>
                         </Header>
@@ -96,7 +100,11 @@ class ChatMain extends Component {
                             <Feed messages={messages} onLikeClick={this.onLikeClick}/>
                         </DimmerDimmable>
                     </Segment>
-                    {isWriteable ? (<Segment><ChatMsgForm onSend={this.onMessage}/></Segment>) : null}
+                    {isWriteable ? (
+                        <Segment>
+                            <ChatMsgForm onSend={this.onMessage}/>
+                        </Segment>
+                    ) : null}
                 </Segment.Group>
             </div>
         )

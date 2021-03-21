@@ -52,6 +52,7 @@ class UsersList extends Component {
             if (isSelected(user)) {
                 className += ' active'
             }
+            // let direct = directs[user.nickname] || null
 
             return (
                 <Item key={'user_' + user.uid} className={className} onClick={this.onChannelSelect(user)}>

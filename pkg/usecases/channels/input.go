@@ -87,3 +87,28 @@ func (l *ChannelsMembersResponse) SetMembers(members []models.Uid) {
 	l.Ok = true
 	l.Members = members
 }
+
+type ChannelsGetLastSeenRequest struct {
+	ChannelId models.ChannelId `json:"cid"`
+}
+
+type ChannelsSetLastSeenRequest struct {
+	ChannelId models.ChannelId `json:"cid"`
+	MessageId models.MessageId `json:"mid"`
+}
+
+type ChannelsSetLastSeenResponse struct {
+	events.ResultStatus
+}
+
+type ChannelsLastSeenResponse struct {
+	events.ResultStatus
+	ChannelId models.ChannelId `json:"cid"`
+	UserId    models.Uid       `json:"uid"`
+	MessageId models.MessageId `json:"mid"`
+}
+
+func (l *ChannelsLastSeenResponse) SetLastSeen(mid models.MessageId) {
+	l.Ok = true
+	l.MessageId = mid
+}

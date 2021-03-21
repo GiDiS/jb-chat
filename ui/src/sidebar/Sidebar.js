@@ -13,7 +13,8 @@ class Sidebar extends Component {
     state = {context: ''}
 
     componentDidMount() {
-
+        this.context.getUsers()
+        this.context.getChannels()
     }
 
     updateContext = (context) => {

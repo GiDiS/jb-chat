@@ -12,7 +12,8 @@ export default class Message {
     at = null;
     images = [];
     likes = [];
-    self =  false;
+    self = false;
+    seen = false;
 
     update = props => {
         let {pid, uid, user, body, isThread, created, images, likes, self} = props
@@ -26,6 +27,12 @@ export default class Message {
         if (self !== undefined) this.self = self
         if (created !== undefined) {
             this.at = Date.parse(created);
+        }
+    }
+
+    markSeen = () => {
+        if (!this.seen) {
+            this.seen = true
         }
     }
 

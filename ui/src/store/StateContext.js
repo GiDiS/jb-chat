@@ -7,10 +7,6 @@ const state = new State()
 const socket = new Socket({state, server: isProd ? '' : 'ws://localhost:8888/ws'})
 state.socket = socket
 state.startPing(5000)
-let token = state.getToken()
-if (token) {
-    state.signInToken({token})
-}
 
 export const StateContext = React.createContext(state);
 

@@ -64,7 +64,7 @@ func (d *dispatcher) Emit(e Event) error {
 
 func (d *dispatcher) Notify(e Event) error {
 	for bus := range d.transports {
-		bus.Notify(e)
+		go bus.Notify(e)
 	}
 	return nil
 }

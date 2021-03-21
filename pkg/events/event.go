@@ -87,6 +87,10 @@ func NewDestSession(sid models.SessionId) *Destination {
 	return &Destination{Type: DestinationSession, Addr: sid.String()}
 }
 
+func NewDestChannel(cid models.ChannelId) *Destination {
+	return &Destination{Type: DestinationChannel, Addr: cid.String()}
+}
+
 func NewDestConnection(connName string) *Destination {
 	return &Destination{Type: DestinationConnection, Addr: connName}
 }

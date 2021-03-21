@@ -12,6 +12,7 @@ import (
 	channelsUc "github.com/GiDiS/jb-chat/pkg/usecases/channels"
 	messagesUc "github.com/GiDiS/jb-chat/pkg/usecases/messages"
 	sessionsUc "github.com/GiDiS/jb-chat/pkg/usecases/sessions"
+	systemUc "github.com/GiDiS/jb-chat/pkg/usecases/system"
 	usersUc "github.com/GiDiS/jb-chat/pkg/usecases/users"
 	"sync"
 )
@@ -24,6 +25,7 @@ type Dispatcher struct {
 	messagesUc messagesUc.Messages
 	sessionsUc sessionsUc.Sessions
 	usersUc    usersUc.Users
+	systemUc   systemUc.System
 	mx         sync.Mutex
 }
 
@@ -33,8 +35,9 @@ func NewDispatcher(c Container) *Dispatcher {
 		logger:     c.Logger,
 		authUc:     authUc.NewAuth(c.Logger, c.Store.Users()),
 		channelsUc: channelsUc.NewChannels(c.Logger, c.Store.Channels(), c.Store.Members(), c.Store.Users()),
-		messagesUc: messagesUc.NewMessages(c.Logger, c.Store.Messages(), c.Store.Users()),
+		messagesUc: messagesUc.NewMessages(c.Logger, c.Store.Channels(), c.Store.Messages(), c.Store.Users()),
 		sessionsUc: sessionsUc.NewSessions(c.Logger, c.Store.Sessions(), c.Store.OnlineUsers(), c.Store.Users()),
+		systemUc:   systemUc.NewSystem(c.Config),
 		usersUc:    usersUc.NewUsers(c.Logger, c.Store.Users()),
 	}
 	d.init()
@@ -47,6 +50,8 @@ func (d *Dispatcher) init() {
 	d.on(handlers_ws.WsConnected, d.onConnected)
 	d.on(handlers_ws.WsDisconnected, d.onDisconnected)
 	d.on(Broadcast, d.onBroadcast)
+
+	d.on(systemUc.SysGetConfig, d.onSysGetConfig)
 	d.on(authUc.AuthRegister, d.onAuthRegister)
 	d.on(authUc.AuthSignIn, d.onAuthSignIn)
 	d.on(authUc.AuthSignOut, d.onAuthSignOut)
@@ -54,6 +59,8 @@ func (d *Dispatcher) init() {
 	d.onRegistered(channelsUc.ChannelsGetList, d.onChannelsGetList)
 	d.onRegistered(channelsUc.ChannelsGetInfo, d.onChannelsGet)
 	d.onRegistered(channelsUc.ChannelsGetDirect, d.onChannelsGetDirect)
+	d.onRegistered(channelsUc.ChannelsGetLastSeen, d.onChannelsGetLastSeen)
+	d.onRegistered(channelsUc.ChannelsSetLastSeen, d.onChannelsSetLastSeen)
 	d.onRegistered(channelsUc.ChannelsGetMembers, d.onChannelsGetMembers)
 	d.onRegistered(channelsUc.ChannelsCreate, d.onChannelsCreate)
 	d.onRegistered(channelsUc.ChannelsDelete, d.onChannelsDelete)
@@ -68,24 +75,24 @@ func (d *Dispatcher) init() {
 }
 
 func (d *Dispatcher) onPing(e events.Event) error {
-	d.reply(Pong, e, nil)
+	d.toReply(Pong, e, nil)
 	return nil
 }
 
 func (d *Dispatcher) onPong(e events.Event) error {
-	d.reply(Ping, e, nil)
+	d.toReply(Ping, e, nil)
 
 	return nil
 }
 
 func (d *Dispatcher) onBroadcast(e events.Event) error {
-	d.broadcast(Broadcast, e, e.Payload)
+	d.toBroadcast(Broadcast, e, e.Payload)
 	return nil
 }
 
 func (d *Dispatcher) onConnected(e events.Event) error {
 	d.logger.Debugf("Connected: %v", e.Payload)
-	d.broadcast(handlers_ws.WsConnected, e, e.Payload)
+	d.toBroadcast(handlers_ws.WsConnected, e, e.Payload)
 
 	return nil
 }
@@ -101,9 +108,21 @@ func (d *Dispatcher) onDisconnected(e events.Event) error {
 		return err
 	}
 
-	d.broadcast(handlers_ws.WsDisconnected, e, e.Payload)
+	d.toBroadcast(handlers_ws.WsDisconnected, e, e.Payload)
 	d.broadcastUserInfo(e.Ctx, e, uid)
 
+	return nil
+}
+
+func (d *Dispatcher) onSysGetConfig(e events.Event) error {
+	if e.Type != systemUc.SysGetConfig {
+		return usecases.ErrInvalidRequest
+	}
+	if resp, err := d.systemUc.GetConfig(e.Ctx); err != nil {
+		return err
+	} else {
+		d.toReply(systemUc.SysConfig, e, resp)
+	}
 	return nil
 }
 
@@ -119,7 +138,7 @@ func (d *Dispatcher) onAuthRegister(e events.Event) error {
 
 	d.logger.Debug(payload)
 
-	d.reply(authUc.AuthRegistered, e, payload)
+	d.toReply(authUc.AuthRegistered, e, payload)
 	d.broadcastUserInfo(e.Ctx, e, uid)
 
 	return nil
@@ -134,7 +153,7 @@ func (d *Dispatcher) onAuthSignIn(e events.Event) error {
 	if err != nil {
 		return err
 	} else if resp.Me == nil {
-		d.reply(authUc.AuthRequired, e, resp)
+		d.toReply(authUc.AuthRequired, e, resp)
 		return nil
 	}
 
@@ -146,7 +165,7 @@ func (d *Dispatcher) onAuthSignIn(e events.Event) error {
 		return err
 	}
 
-	d.reply(authUc.AuthSignedIn, e, resp)
+	d.toReply(authUc.AuthSignedIn, e, resp)
 	d.broadcastUserInfo(e.Ctx, e, resp.Me.UserId)
 
 	return nil
@@ -165,7 +184,7 @@ func (d *Dispatcher) onAuthSignOut(e events.Event) error {
 		return err
 	}
 
-	d.reply(authUc.AuthSignedOut, e, nil)
+	d.toReply(authUc.AuthSignedOut, e, nil)
 	d.broadcastUserInfo(e.Ctx, e, uid)
 
 	return nil
@@ -179,7 +198,7 @@ func (d *Dispatcher) onChannelsGetList(e events.Event) error {
 	if resp, err := d.channelsUc.GetList(e.Ctx, request); err != nil {
 		return err
 	} else {
-		d.reply(channelsUc.ChannelsList, e, resp)
+		d.toReply(channelsUc.ChannelsList, e, resp)
 	}
 	return nil
 }
@@ -192,7 +211,7 @@ func (d *Dispatcher) onChannelsGet(e events.Event) error {
 	if resp, err := d.channelsUc.Get(e.Ctx, request.ChannelId); err != nil {
 		return err
 	} else {
-		d.reply(channelsUc.ChannelsInfo, e, resp)
+		d.toReply(channelsUc.ChannelsInfo, e, resp)
 	}
 	return nil
 }
@@ -205,7 +224,38 @@ func (d *Dispatcher) onChannelsGetDirect(e events.Event) error {
 	if resp, err := d.channelsUc.GetDirect(e.Ctx, e.GetUid(), request); err != nil {
 		return err
 	} else {
-		d.reply(channelsUc.ChannelsDirectInfo, e, resp)
+		d.toReply(channelsUc.ChannelsDirectInfo, e, resp)
+	}
+	return nil
+}
+
+func (d *Dispatcher) onChannelsGetLastSeen(e events.Event) error {
+	request, ok := e.Payload.(channelsUc.ChannelsGetLastSeenRequest)
+	if e.Type != channelsUc.ChannelsGetLastSeen || !ok {
+		return usecases.ErrInvalidRequest
+	}
+	if mid, err := d.channelsUc.GetLastSeen(e.Ctx, request.ChannelId, e.GetUid()); err != nil {
+		return err
+	} else {
+		resp := channelsUc.ChannelsLastSeenResponse{
+			ChannelId: request.ChannelId,
+			UserId:    e.GetUid(),
+		}
+		resp.SetLastSeen(mid)
+		d.toReply(channelsUc.ChannelsLastSeen, e, resp)
+	}
+	return nil
+}
+
+func (d *Dispatcher) onChannelsSetLastSeen(e events.Event) error {
+	request, ok := e.Payload.(channelsUc.ChannelsSetLastSeenRequest)
+	if e.Type != channelsUc.ChannelsSetLastSeen || !ok {
+		return usecases.ErrInvalidRequest
+	}
+	if err := d.channelsUc.SetLastSeen(e.Ctx, request.ChannelId, e.GetUid(), request.MessageId); err != nil {
+		return err
+	} else {
+		// do nothing
 	}
 	return nil
 }
@@ -222,7 +272,7 @@ func (d *Dispatcher) onChannelsGetMembers(e events.Event) error {
 	if resp, err := d.channelsUc.GetMembers(e.Ctx, e.GetUid(), request); err != nil {
 		return err
 	} else {
-		d.reply(channelsUc.ChannelsMembers, e, resp)
+		d.toReply(channelsUc.ChannelsMembers, e, resp)
 	}
 	return nil
 }
@@ -236,7 +286,7 @@ func (d *Dispatcher) onChannelsCreate(e events.Event) error {
 	if resp, err := d.channelsUc.Create(e.Ctx, e.GetUid(), request); err != nil {
 		return err
 	} else {
-		d.broadcast(channelsUc.ChannelsCreated, e, resp)
+		d.toBroadcast(channelsUc.ChannelsCreated, e, resp)
 	}
 	return nil
 }
@@ -253,7 +303,7 @@ func (d *Dispatcher) onChannelsDelete(e events.Event) error {
 	if resp, err := d.channelsUc.Delete(e.Ctx, e.GetUid(), request); err != nil {
 		return err
 	} else {
-		d.broadcast(channelsUc.ChannelsDeleted, e, resp)
+		d.toBroadcast(channelsUc.ChannelsDeleted, e, resp)
 	}
 	return nil
 }
@@ -270,7 +320,7 @@ func (d *Dispatcher) onChannelsJoin(e events.Event) error {
 	if resp, err := d.channelsUc.Join(e.Ctx, e.GetUid(), request); err != nil {
 		return err
 	} else {
-		d.reply(channelsUc.ChannelsJoined, e, resp)
+		d.toReply(channelsUc.ChannelsJoined, e, resp)
 	}
 	d.replyChannelMembers(e.Ctx, e, request.ChannelId)
 	return nil
@@ -289,7 +339,7 @@ func (d *Dispatcher) onChannelsLeave(e events.Event) error {
 	if err != nil {
 		return err
 	} else {
-		d.reply(channelsUc.ChannelsLeft, e, resp)
+		d.toReply(channelsUc.ChannelsLeft, e, resp)
 	}
 	d.replyChannelMembers(e.Ctx, e, request.ChannelId)
 	return nil
@@ -320,7 +370,7 @@ func (d *Dispatcher) onUsersGetList(e events.Event) error {
 	}
 	resp.SetUsers(users)
 
-	d.reply(usersUc.UsersList, e, resp)
+	d.toReply(usersUc.UsersList, e, resp)
 
 	return nil
 }
@@ -334,7 +384,7 @@ func (d *Dispatcher) onUsersGetInfo(e events.Event) error {
 	if resp, err := d.usersUc.Get(e.Ctx, request); err != nil {
 		return err
 	} else {
-		d.reply(usersUc.UsersInfo, e, resp)
+		d.toReply(usersUc.UsersInfo, e, resp)
 	}
 	return nil
 }
@@ -364,7 +414,7 @@ func (d *Dispatcher) onMessagesGetList(e events.Event) error {
 		users[idx] = user
 	}
 	resp.Users = users
-	d.reply(messagesUc.MessageList, e, resp)
+	d.toReply(messagesUc.MessageList, e, resp)
 
 	return nil
 }
@@ -381,7 +431,7 @@ func (d *Dispatcher) onMessageCreate(e events.Event) error {
 	if resp, err := d.messagesUc.Create(e.Ctx, request); err != nil {
 		return err
 	} else {
-		d.broadcast(messagesUc.MessageCreated, e, resp)
+		d.toBroadcast(messagesUc.MessageCreated, e, resp)
 	}
 	return nil
 }
@@ -395,7 +445,7 @@ func (d *Dispatcher) replyChannelMembers(ctx context.Context, prev events.Event,
 		d.logger.Errorf("Get members failed: %v", err)
 		return
 	}
-	d.reply(channelsUc.ChannelsMembers, prev, resp)
+	d.toReply(channelsUc.ChannelsMembers, prev, resp)
 }
 
 func (d *Dispatcher) broadcastUserInfo(ctx context.Context, prev events.Event, uid models.Uid) {
@@ -420,7 +470,7 @@ func (d *Dispatcher) broadcastUserInfo(ctx context.Context, prev events.Event, u
 		resp.User.Status = models.UserStatusOffline
 	}
 
-	d.broadcast(usersUc.UsersInfo, prev, resp)
+	d.toBroadcast(usersUc.UsersInfo, prev, resp)
 }
 
 func (d *Dispatcher) on(t events.Type, h events.EventHandler) {
@@ -443,7 +493,7 @@ func (d *Dispatcher) emit(event events.Event, err error) {
 	}
 }
 
-func (d *Dispatcher) reply(t events.Type, prev events.Event, payload interface{}) {
+func (d *Dispatcher) toReply(t events.Type, prev events.Event, payload interface{}) {
 	d.notify(events.NewEvent(
 		t,
 		events.WithTo(prev.From),
@@ -452,7 +502,16 @@ func (d *Dispatcher) reply(t events.Type, prev events.Event, payload interface{}
 	))
 }
 
-func (d *Dispatcher) broadcast(t events.Type, prev events.Event, payload interface{}) {
+func (d *Dispatcher) toChannel(t events.Type, prev events.Event, payload interface{}, cid models.ChannelId) {
+	d.notify(events.NewEvent(
+		t,
+		events.WithTo(events.NewDestChannel(cid)),
+		events.WithPayload(payload),
+		events.WithPrev(&prev),
+	))
+}
+
+func (d *Dispatcher) toBroadcast(t events.Type, prev events.Event, payload interface{}) {
 	d.notify(events.NewEvent(
 		t,
 		events.WithTo(events.NewDestBroadcast()),
@@ -469,7 +528,7 @@ func (d *Dispatcher) auth(h events.EventHandler, required bool) events.EventHand
 		}
 		e.SetUid(uid)
 		if required && uid == models.NoUser {
-			d.reply(authUc.AuthRequired, e, nil)
+			d.toReply(authUc.AuthRequired, e, nil)
 			return usecases.ErrAuthRequired
 		}
 		return h(e)

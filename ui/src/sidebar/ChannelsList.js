@@ -5,6 +5,7 @@ import {StateContext} from '../store/StateContext';
 import Filter from "./Filter";
 import './ChannelsList.css'
 import {GotoChannel} from "./utils";
+import {ChannelStatus} from "./ChannelStatus";
 
 class ChannelsList extends Component {
     state = {filter: '', showCreateDialog: false}
@@ -43,7 +44,10 @@ class ChannelsList extends Component {
             return (
                 <Item key={'chan_' + idx} className={className} onClick={this.onSelectChannel(chan)}>
                     {/*<Link to={ChannelLink(chan)} onClick={this.onSelectChannel}>*/}
-                    <Item.Content verticalAlign='middle' className='channelItem-name'>{chan.title}</Item.Content>
+                    <Item.Content verticalAlign='middle' className='channelItem-name'>
+                        {chan.title}
+                        <ChannelStatus channel={chan}/>
+                    </Item.Content>
                     {/*</Link>*/}
                 </Item>
             )
@@ -102,6 +106,7 @@ class ModalCreateChannel extends React.Component {
                 <Modal.Content>
                     <Form.Input
                         text
+                        className='channelName'
                         onChange={event => this.setState({value: event.target.value})}
                         placeholder='Please enter channel name...'
                     />
