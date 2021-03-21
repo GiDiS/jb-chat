@@ -4,7 +4,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const Ns = "jb-chat"
+const Ns = "jb_chat"
 
 func CreateCounter(name, help string, labels map[string]string) prometheus.Counter {
 	counter := prometheus.NewCounter(prometheus.CounterOpts{
@@ -31,25 +31,29 @@ func CreateUsecaseGauge(usecaseName, gaugeName, gaugeHelp string) prometheus.Gau
 }
 
 func CreateUsecaseCounter(usecaseName string) prometheus.Counter {
+	return CreateUsecaseNamedCounter(usecaseName, "exec_total", "Number of executions of usecase")
+}
+
+func CreateUsecaseNamedCounter(usecaseName, counterName, help string) prometheus.Counter {
 	counter := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: Ns,
 		Subsystem: "usecase",
-		Name:      "exec_total",
+		Name:      counterName,
 		ConstLabels: prometheus.Labels{
 			"usecase": usecaseName,
 		},
-		Help: "Number of executions of usecase",
+		Help: help,
 	})
 
 	prometheus.MustRegister(counter)
 	return counter
 }
 
-func CreateUsecaseActionCounterVec(usecaseName string, labelNames []string) *prometheus.CounterVec {
+func CreateUsecaseEventCounterVec(usecaseName, counterName string, labelNames []string) *prometheus.CounterVec {
 	counter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Ns,
 		Subsystem: "usecase",
-		Name:      "exec_action_total",
+		Name:      counterName,
 		ConstLabels: prometheus.Labels{
 			"usecase": usecaseName,
 		},
@@ -60,15 +64,15 @@ func CreateUsecaseActionCounterVec(usecaseName string, labelNames []string) *pro
 	return counter
 }
 
-func CreateUsecaseActionErrorsCounterVec(usecaseName string, labelNames []string) *prometheus.CounterVec {
+func CreateUsecaseEventErrorCounterVec(usecaseName string, labelNames []string) *prometheus.CounterVec {
 	counter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Ns,
 		Subsystem: "usecase",
-		Name:      "errors_action_total",
+		Name:      "errors_event_total",
 		ConstLabels: prometheus.Labels{
 			"usecase": usecaseName,
 		},
-		Help: "Number of action fails of usecase",
+		Help: "Number of event fails of usecase",
 	}, labelNames)
 
 	prometheus.MustRegister(*counter)
@@ -104,11 +108,11 @@ func CreateUsecaseTimingHistogram(usecaseName string) prometheus.Histogram {
 	return histogram
 }
 
-func CreateUsecaseActionTimingHistogramVec(usecaseName string, labelNames []string) *prometheus.HistogramVec {
+func CreateUsecaseEventTimingHistogramVec(usecaseName string, labelNames []string) *prometheus.HistogramVec {
 	histogram := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: Ns,
 		Subsystem: "usecase",
-		Name:      "exec_action_seconds",
+		Name:      "exec_event_seconds",
 		ConstLabels: prometheus.Labels{
 			"usecase": usecaseName,
 		},

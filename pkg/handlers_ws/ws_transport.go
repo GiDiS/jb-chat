@@ -29,6 +29,7 @@ type wsTransport struct {
 	eventsResolver   events.Resolver
 	upgrader         websocket.Upgrader
 	logger           logger.Logger
+	metrics          Metrics
 	clients          map[*WsClient]string
 	connections      map[string]*WsClient
 	exit             chan struct{}
@@ -44,6 +45,7 @@ func NewWsTransport(eventsResolver events.Resolver, log logger.Logger) *wsTransp
 	ws := wsTransport{
 		eventsResolver:   eventsResolver,
 		logger:           log.WithField("transport", "ws"),
+		metrics:          newPromMetrics(log),
 		exit:             make(chan struct{}),
 		clients:          make(map[*WsClient]string),
 		connections:      make(map[string]*WsClient),
@@ -147,6 +149,7 @@ func (a *wsTransport) onConnect(client *WsClient) {
 	a.clients[client] = client.GetId()
 	a.connections[client.GetId()] = client
 	a.logger.Debugf("Connected: %s", client.GetId())
+	a.metrics.SetConnections(len(a.connections))
 	if ev, err := NewClientEvent(WsConnected, client); err != nil {
 		a.logger.Errorf("New connected event failed: %v", err)
 	} else if ev != nil {
@@ -160,6 +163,8 @@ func (a *wsTransport) onDisconnect(client *WsClient) {
 		delete(a.clients, client)
 		delete(a.connections, client.GetId())
 		a.mx.Unlock()
+
+		a.metrics.SetConnections(len(a.connections))
 
 		client.MarkDisconnected()
 		a.logger.Debugf("Disconnected: %s", client.GetId())
@@ -227,9 +232,14 @@ func (a *wsTransport) onDirect(client *WsClient, event events.Event) {
 
 	a.logger.Debugf("Send: %+v", string(msg.msg))
 	client.send <- msg.msg
+
+	a.metrics.IncOutcome(event.Type.String())
+
 }
 
 func (a *wsTransport) onEmit(event events.Event) {
+	a.metrics.IncIncome(event.Type.String())
+
 	if a.eventsBus != nil {
 		a.eventsBus.Emit(event)
 	}
