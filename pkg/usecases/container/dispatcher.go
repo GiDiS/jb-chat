@@ -24,21 +24,30 @@ type Dispatcher struct {
 	channelsUc channelsUc.Channels
 	messagesUc messagesUc.Messages
 	sessionsUc sessionsUc.Sessions
-	usersUc    usersUc.Users
 	systemUc   systemUc.System
+	usersUc    usersUc.Users
 	mx         sync.Mutex
 }
 
-func NewDispatcher(c Container) *Dispatcher {
+func NewDispatcher(
+	dispatcher events.Dispatcher,
+	logger logger.Logger,
+	authUc authUc.Auth,
+	channelsUc channelsUc.Channels,
+	messagesUc messagesUc.Messages,
+	sessionsUc sessionsUc.Sessions,
+	systemUc systemUc.System,
+	usersUc usersUc.Users,
+) *Dispatcher {
 	d := Dispatcher{
-		dispatcher: c.EventsDispatcher,
-		logger:     c.Logger,
-		authUc:     authUc.NewAuth(c.Logger, c.Store.Users()),
-		channelsUc: channelsUc.NewChannels(c.Logger, c.Store.Channels(), c.Store.Members(), c.Store.Users()),
-		messagesUc: messagesUc.NewMessages(c.Logger, c.Store.Channels(), c.Store.Messages(), c.Store.Users()),
-		sessionsUc: sessionsUc.NewSessions(c.Logger, c.Store.Sessions(), c.Store.OnlineUsers(), c.Store.Users()),
-		systemUc:   systemUc.NewSystem(c.Config),
-		usersUc:    usersUc.NewUsers(c.Logger, c.Store.Users()),
+		dispatcher: dispatcher,
+		logger:     logger,
+		authUc:     authUc,
+		channelsUc: channelsUc,
+		messagesUc: messagesUc,
+		sessionsUc: sessionsUc,
+		systemUc:   systemUc,
+		usersUc:    usersUc,
 	}
 	d.init()
 	return &d

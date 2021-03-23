@@ -11,6 +11,12 @@ import (
 	"github.com/GiDiS/jb-chat/pkg/store/postgres"
 	"github.com/GiDiS/jb-chat/pkg/store/postgres/migration"
 	"github.com/GiDiS/jb-chat/pkg/store/seed"
+	authUc "github.com/GiDiS/jb-chat/pkg/usecases/auth"
+	channelsUc "github.com/GiDiS/jb-chat/pkg/usecases/channels"
+	messagesUc "github.com/GiDiS/jb-chat/pkg/usecases/messages"
+	sessionsUc "github.com/GiDiS/jb-chat/pkg/usecases/sessions"
+	systemUc "github.com/GiDiS/jb-chat/pkg/usecases/system"
+	usersUc "github.com/GiDiS/jb-chat/pkg/usecases/users"
 )
 
 type Container struct {
@@ -21,6 +27,12 @@ type Container struct {
 	AppDispatcher    *Dispatcher
 	EventsDispatcher events.Dispatcher
 	EventsResolver   events.Resolver
+	AuthUsecase      authUc.Auth
+	ChannelsUsecase  channelsUc.Channels
+	MessagesUsecase  messagesUc.Messages
+	SessionsUsecase  sessionsUc.Sessions
+	SystemUsecase    systemUc.System
+	UsersUsecase     usersUc.Users
 }
 
 func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
@@ -59,7 +71,23 @@ func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
 	c.EventsDispatcher = events.NewDispatcher(c.Logger)
 	c.EventsDispatcher.AddTransport(c.WsTransport, true)
 
-	c.AppDispatcher = NewDispatcher(c)
+	c.AuthUsecase = authUc.NewAuth(c.Logger, c.Store.Users())
+	c.ChannelsUsecase = channelsUc.NewChannels(c.Logger, c.Store.Channels(), c.Store.Members(), c.Store.Users())
+	c.MessagesUsecase = messagesUc.NewMessages(c.Logger, c.Store.Channels(), c.Store.Messages(), c.Store.Users())
+	c.SessionsUsecase = sessionsUc.NewSessions(c.Logger, c.Store.Sessions(), c.Store.OnlineUsers(), c.Store.Users())
+	c.SystemUsecase = systemUc.NewSystem(c.Config)
+	c.UsersUsecase = usersUc.NewUsers(c.Logger, c.Store.Users())
+
+	c.AppDispatcher = NewDispatcher(
+		c.EventsDispatcher,
+		c.Logger,
+		c.AuthUsecase,
+		c.ChannelsUsecase,
+		c.MessagesUsecase,
+		c.SessionsUsecase,
+		c.SystemUsecase,
+		c.UsersUsecase,
+	)
 
 	return &c
 }
