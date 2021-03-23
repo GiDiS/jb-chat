@@ -74,15 +74,34 @@ cd "${GOPATH}/src/github.com/GiDiS/jb-chat" && make stop-production
 ```
 
 
+## Health checks:
+
+**host:DIAG_PORT/readyz**
+
+**host:DIAG_PORT/healthz**
+
+## Metrics:
+**host:DIAG_PORT/metrics**
+
+Go app standard metrics
+
+WebSocket: 
+ * Count income and outcome events by type
+ * Length and capacity recv/send queues, connections count 
+
+Dispatcher: 
+ * Count income and outcome events by type
+ * Event process times 
+ * Number errors 
 
 ## Issues (todo):
 
-* UI: reconnect to ws after backend restart
+* ~~UI: reconnect to ws after backend restart~~
 * UI: refresh after channel create, join, leave
 * UI: load channel messages on page initial open by direct url
-* Back: Persistent storage
+* ~~Back: Persistent storage~~
 * Back: Tests
-* Back: Metrics
+* ~~Back: Metrics~~
 * ~~Deploy: helm chart~~ Used k8s-handle
 * ~~Deploy: minikube deploy with ingress for stable google sign-in~~
 

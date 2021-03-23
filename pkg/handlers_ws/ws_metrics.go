@@ -16,29 +16,39 @@ type Metrics interface {
 
 type promMetrics struct {
 	Metrics
-	connections   *prometheus.Gauge
+	connections   prometheus.GaugeFunc
+	queueRecvLen  prometheus.GaugeFunc
+	queueRecvCap  prometheus.GaugeFunc
+	queueSendLen  prometheus.GaugeFunc
+	queueSendCap  prometheus.GaugeFunc
 	incomeEvents  *prometheus.CounterVec
 	outcomeEvents *prometheus.CounterVec
 	logger        logger.Logger
 }
 
-func newPromMetrics(logger logger.Logger) *promMetrics {
+func newPromMetrics(logger logger.Logger, tr *wsTransport) *promMetrics {
 	labels := []string{"event"}
 
-	connections := metrics.CreateUsecaseGauge(usecase, "connections", "Number of websocket connections")
-
-	metrics := promMetrics{
-		connections:   &connections,
-		incomeEvents:  metrics.CreateUsecaseEventCounterVec(usecase, "income_events", labels),
-		outcomeEvents: metrics.CreateUsecaseEventCounterVec(usecase, "outcome_events", labels),
+	return &promMetrics{
+		connections: metrics.CreateUsecaseGaugeFunc(usecase, "ws_connections", "Number of websocket connections", func() float64 {
+			return float64(len(tr.connections))
+		}),
+		queueRecvLen: metrics.CreateUsecaseGaugeFunc(usecase, "ws_queue_recv_len", "Recv queue items", func() float64 {
+			return float64(len(tr.busRecv))
+		}),
+		queueRecvCap: metrics.CreateUsecaseGaugeFunc(usecase, "ws_queue_recv_cap", "Recv queue length", func() float64 {
+			return float64(cap(tr.busRecv))
+		}),
+		queueSendLen: metrics.CreateUsecaseGaugeFunc(usecase, "ws_queue_send_len", "Send queue items", func() float64 {
+			return float64(len(tr.busSend))
+		}),
+		queueSendCap: metrics.CreateUsecaseGaugeFunc(usecase, "ws_queue_send_cap", "Send queue length", func() float64 {
+			return float64(cap(tr.busSend))
+		}),
+		incomeEvents:  metrics.CreateUsecaseEventCounterVec(usecase, "ws_income_events", labels),
+		outcomeEvents: metrics.CreateUsecaseEventCounterVec(usecase, "ws_outcome_events", labels),
 		logger:        logger,
 	}
-
-	return &metrics
-}
-
-func (m promMetrics) SetConnections(cnt int) {
-	(*m.connections).Set(float64(cnt))
 }
 
 func (m promMetrics) IncIncome(event string) {

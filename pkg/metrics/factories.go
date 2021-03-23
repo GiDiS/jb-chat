@@ -27,6 +27,22 @@ func CreateUsecaseGauge(usecaseName, gaugeName, gaugeHelp string) prometheus.Gau
 		},
 		Help: gaugeHelp,
 	})
+	prometheus.MustRegister(gauge)
+	return gauge
+}
+
+func CreateUsecaseGaugeFunc(usecaseName, gaugeName, gaugeHelp string, callback func() float64) prometheus.GaugeFunc {
+	gauge := prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+		Namespace: Ns,
+		Subsystem: "usecase",
+		Name:      gaugeName,
+		ConstLabels: prometheus.Labels{
+			"usecase": usecaseName,
+		},
+		Help: gaugeHelp,
+	}, callback)
+	prometheus.MustRegister(gauge)
+
 	return gauge
 }
 
