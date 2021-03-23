@@ -52,7 +52,7 @@ func (c *connector) Serve(ctx context.Context) {
 			select {
 			case income, ok := <-c.recvChan:
 				if !ok {
-					break
+					return
 				} else if c.onRecv != nil {
 					c.onRecv(income)
 				}
@@ -63,7 +63,7 @@ func (c *connector) Serve(ctx context.Context) {
 				}
 				c.sendChan = nil
 				c.mx.Unlock()
-				break
+				return
 			}
 		}
 	}()

@@ -30,7 +30,7 @@ func (s *messagesMemoryStore) Create(_ context.Context, message models.Message) 
 	}
 
 	if s.messages == nil {
-		s.messages = make(map[models.MessageId]models.Message, 0)
+		s.messages = make(map[models.MessageId]models.Message)
 	}
 	s.lastMsg++
 	message.MsgId = s.lastMsg

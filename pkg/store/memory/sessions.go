@@ -14,7 +14,7 @@ type sessionsMemoryStore struct {
 
 func NewSessionsMemoryStore() *sessionsMemoryStore {
 	return &sessionsMemoryStore{
-		sessions: make(map[string]models.Session, 0),
+		sessions: make(map[string]models.Session),
 	}
 }
 
@@ -118,7 +118,7 @@ func (s *sessionsMemoryStore) GetOnline(ctx context.Context, uid models.Uid) ([]
 }
 
 func (s *sessionsMemoryStore) GetAllOnline(ctx context.Context) (map[models.Uid][]string, error) {
-	onlineSessions := make(map[models.Uid][]string, 0)
+	onlineSessions := make(map[models.Uid][]string)
 	for _, sess := range s.sessions {
 		if !sess.IsOnline {
 			continue

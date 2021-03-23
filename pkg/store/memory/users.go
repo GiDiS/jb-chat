@@ -17,8 +17,8 @@ type usersMemoryStore struct {
 
 func NewUsersMemoryStore() *usersMemoryStore {
 	return &usersMemoryStore{
-		users:       make(map[models.Uid]models.User, 0),
-		usersStatus: make(map[models.Uid]models.UserStatus, 0),
+		users:       make(map[models.Uid]models.User),
+		usersStatus: make(map[models.Uid]models.UserStatus),
 	}
 }
 

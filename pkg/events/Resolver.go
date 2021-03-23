@@ -67,12 +67,13 @@ func (r *resolver) Unmarshal(raw []byte) (Event, error) {
 	}
 	event := Event{Type: Type(strings.Trim(string(rawEventType), "\""))}
 
-	rawPayload, _ := rawMsg["payload"]
-	payload, err := DefaultResolver.UnmarshalPayload(event.Type, rawPayload)
-	if err != nil {
-		return Event{Type: InvalidPayload, Payload: string(raw)}, err
+	if rawPayload, ok := rawMsg["payload"]; ok {
+		payload, err := DefaultResolver.UnmarshalPayload(event.Type, rawPayload)
+		if err != nil {
+			return Event{Type: InvalidPayload, Payload: string(raw)}, err
+		}
+		event.Payload = payload
 	}
-	event.Payload = payload
 
 	rawId, ok := rawMsg["id"]
 	if ok && string(rawId) != "\"\"" {

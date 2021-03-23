@@ -59,10 +59,10 @@ func NewWsClient(transport *wsTransport, conn *websocket.Conn, logger logger.Log
 	}
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "transport", "websocket")
-	ctx = context.WithValue(ctx, "connection", c.GetId())
-	ctx = context.WithValue(ctx, "remote_addr", conn.RemoteAddr().String())
-	ctx = context.WithValue(ctx, "local_addr", conn.LocalAddr().String())
+	ctx = context.WithValue(ctx, events.CtxKeyTransport, "websocket")
+	ctx = context.WithValue(ctx, events.CtxKeyConnection, c.GetId())
+	ctx = context.WithValue(ctx, events.CtxKeyRemoteAddr, conn.RemoteAddr().String())
+	ctx = context.WithValue(ctx, events.CtxKeyLocalAddr, conn.LocalAddr().String())
 	c.ctx = ctx
 
 	return c

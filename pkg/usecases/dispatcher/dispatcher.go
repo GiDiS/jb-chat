@@ -262,12 +262,7 @@ func (d *Dispatcher) onChannelsSetLastSeen(e events.Event) error {
 	if e.Type != channelsUc.ChannelsSetLastSeen || !ok {
 		return usecases.ErrInvalidRequest
 	}
-	if err := d.channelsUc.SetLastSeen(e.Ctx, request.ChannelId, e.GetUid(), request.MessageId); err != nil {
-		return err
-	} else {
-		// do nothing
-	}
-	return nil
+	return d.channelsUc.SetLastSeen(e.Ctx, request.ChannelId, e.GetUid(), request.MessageId)
 }
 
 func (d *Dispatcher) onChannelsGetMembers(e events.Event) error {

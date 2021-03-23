@@ -59,8 +59,8 @@ func (s *Seeder) fill(ctx context.Context) error {
 	membersStore := s.store.Members()
 	messagesStore := s.store.Messages()
 	for _, ch := range channels {
-		chUsers, _ := channelsUsers[ch.Cid]
-		chMessages, _ := channelsMessages[ch.Cid]
+		chUsers := channelsUsers[ch.Cid]
+		chMessages := channelsMessages[ch.Cid]
 
 		cid, err := channelsStore.CreatePublic(ctx, models.NoUser, ch.Title)
 		if err != nil {

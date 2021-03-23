@@ -95,9 +95,7 @@ func (s *channelsMemoryStore) Delete(_ context.Context, cid models.ChannelId) er
 	delete(s.channels, cid)
 	delete(s.members, cid)
 	for uid, channels := range s.usersChannels {
-		if _, ok := channels[cid]; ok {
-			delete(channels, cid)
-		}
+		delete(channels, cid)
 		s.usersChannels[uid] = channels
 	}
 

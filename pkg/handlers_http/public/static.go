@@ -70,7 +70,7 @@ type embedFilesApi struct {
 }
 
 func NewEmbedFilesApi(pathPrefix, baseDir string) *embedFilesApi {
-	pkger.Include("/ui/build")
+	_ = pkger.Include("/ui/build")
 	return &embedFilesApi{
 		baseDir:    strings.TrimRight(baseDir, "/"),
 		pathPrefix: pathPrefix,
@@ -106,8 +106,6 @@ func (a *embedFilesApi) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	http.NotFound(w, r)
-	return
-
 }
 
 func (a *embedFilesApi) serveFile(w http.ResponseWriter, filePath string) error {
@@ -132,6 +130,9 @@ func (a *embedFilesApi) serveFile(w http.ResponseWriter, filePath string) error 
 		if stat.Size() > 0 {
 			w.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 		}
+	}
+	if err != nil {
+		println(err)
 	}
 	//
 	//if strings.HasSuffix(filePath, ".json") {

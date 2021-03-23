@@ -12,6 +12,14 @@ import (
 	"time"
 )
 
+type ctxKey string
+
+var CtxKeyConnection ctxKey = "connection"
+var CtxKeyUid ctxKey = "uid"
+var CtxKeyRemoteAddr ctxKey = "remote_addr"
+var CtxKeyLocalAddr ctxKey = "local_addr"
+var CtxKeyTransport ctxKey = "transport"
+
 type Type string
 
 const InvalidType Type = "sys.invalid_payload"
@@ -107,7 +115,7 @@ func (e *Event) GetSid() string {
 	if e == nil || e.Ctx == nil {
 		return ""
 	}
-	conId, ok := e.Ctx.Value("connection").(string)
+	conId, ok := e.Ctx.Value(CtxKeyConnection).(string)
 	if !ok {
 		return ""
 	}
@@ -119,7 +127,7 @@ func (e *Event) GetUid() models.Uid {
 	if e == nil || e.Ctx == nil {
 		return models.NoUser
 	}
-	uid, ok := e.Ctx.Value("uid").(models.Uid)
+	uid, ok := e.Ctx.Value(CtxKeyUid).(models.Uid)
 	if !ok {
 		return models.NoUser
 	} else {
@@ -135,7 +143,7 @@ func (e *Event) SetUid(uid models.Uid) {
 	if e.Ctx == nil {
 		e.Ctx = context.Background()
 	}
-	e.Ctx = context.WithValue(e.Ctx, "uid", uid)
+	e.Ctx = context.WithValue(e.Ctx, CtxKeyUid, uid)
 }
 
 func (e *Event) UnmarshalJSON(blob []byte) error {
@@ -152,12 +160,13 @@ func (e *Event) UnmarshalJSON(blob []byte) error {
 	}
 	*e = Event{Type: Type(strings.Trim(string(rawEventType), "\""))}
 
-	rawPayload, _ := raw["payload"]
-	payload, err := DefaultResolver.UnmarshalPayload(e.Type, rawPayload)
-	if err != nil {
-		return err
+	if rawPayload, ok := raw["payload"]; ok {
+		payload, err := DefaultResolver.UnmarshalPayload(e.Type, rawPayload)
+		if err != nil {
+			return err
+		}
+		e.Payload = payload
 	}
-	e.Payload = payload
 
 	return nil
 }

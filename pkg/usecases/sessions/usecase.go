@@ -34,7 +34,7 @@ func NewSessions(
 		sessionsStore:    sessionsStore,
 		usersOnlineStore: usersOnlineStore,
 		usersStore:       usersStore,
-		sessions:         make(map[string]models.Uid, 0),
+		sessions:         make(map[string]models.Uid),
 	}
 }
 

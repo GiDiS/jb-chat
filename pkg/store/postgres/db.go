@@ -70,8 +70,6 @@ func keepAlive(db *sqlx.DB, timeout time.Duration, log logger.Logger) {
 		time.Sleep(timeout)
 		if err := db.Ping(); err != nil {
 			log.Errorf("Db pinger error: %v", err)
-		} else {
-			//log.Debugf("Mysql ok")
 		}
 	}
 }

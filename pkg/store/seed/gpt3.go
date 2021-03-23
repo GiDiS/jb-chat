@@ -30,7 +30,7 @@ func GetAnswer(ctx context.Context, question string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		data := make(map[string]string, 0)
+		data := make(map[string]string)
 		err = json.Unmarshal(body, &data)
 		if err != nil {
 			return "", err

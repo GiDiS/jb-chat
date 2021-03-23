@@ -101,7 +101,7 @@ func (a *wsTransport) Serve(ctx context.Context) {
 				a.onEmit(event)
 			case event := <-a.busRecv:
 				a.onBusRecv(event)
-			case msg, _ := <-a.clientIncome:
+			case msg := <-a.clientIncome:
 				a.onIncomeMsg(msg)
 			}
 		}
@@ -132,6 +132,7 @@ func (a *wsTransport) upgradeAndRun() func(w http.ResponseWriter, r *http.Reques
 		client.Serve(r.Context())
 		hostname, err := os.Hostname()
 		if err != nil {
+			a.logger.WithError(err).Errorf("os hostname failed: %v", err)
 		}
 		a.clientRegister <- client
 		a.logger.Debugf("Registered: %s, %s", hostname, client.GetId())
