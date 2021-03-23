@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/GiDiS/jb-chat/pkg/config"
+	"github.com/GiDiS/jb-chat/pkg/container"
 	"github.com/GiDiS/jb-chat/pkg/handlers_http/diag"
 	"github.com/GiDiS/jb-chat/pkg/handlers_http/public"
 	"github.com/GiDiS/jb-chat/pkg/logger"
-	"github.com/GiDiS/jb-chat/pkg/usecases/container"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
@@ -37,16 +37,18 @@ func (app *App) Run(ctx context.Context) int {
 	if err := app.init(ctx); err > 0 {
 		return err
 	}
-
-	select {
-	case <-ctx.Done():
-	}
+	<-ctx.Done()
 	return ErrOk
 }
 
 func (app *App) init(ctx context.Context) int {
 	if err := app.initLog(ctx); err != nil {
 		return ErrInitLoggerFailed
+	}
+
+	ctx, err := app.initInterrupts(ctx)
+	if err != nil {
+		return ErrInitInterruptsFailed
 	}
 
 	if err := app.initPublicHttpServer(ctx); err != nil {
@@ -71,7 +73,7 @@ func (app *App) initLog(ctx context.Context) error {
 
 func (app *App) initInterrupts(ctx context.Context) (context.Context, error) {
 	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	newCtx, cancel := context.WithCancel(ctx)
 
 	go func() {

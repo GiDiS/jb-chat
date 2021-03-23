@@ -13,6 +13,7 @@ import (
 	"github.com/GiDiS/jb-chat/pkg/store/seed"
 	authUc "github.com/GiDiS/jb-chat/pkg/usecases/auth"
 	channelsUc "github.com/GiDiS/jb-chat/pkg/usecases/channels"
+	dispatcherUc "github.com/GiDiS/jb-chat/pkg/usecases/dispatcher"
 	messagesUc "github.com/GiDiS/jb-chat/pkg/usecases/messages"
 	sessionsUc "github.com/GiDiS/jb-chat/pkg/usecases/sessions"
 	systemUc "github.com/GiDiS/jb-chat/pkg/usecases/system"
@@ -24,7 +25,7 @@ type Container struct {
 	Logger           logger.Logger
 	Store            store.AppStore
 	WsTransport      handlers_ws.WsApi
-	AppDispatcher    *Dispatcher
+	AppDispatcher    *dispatcherUc.Dispatcher
 	EventsDispatcher events.Dispatcher
 	EventsResolver   events.Resolver
 	AuthUsecase      authUc.Auth
@@ -49,7 +50,7 @@ func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
 		migration.MustMigrate(db)
 		appStore, err := postgres.NewAppStore(db)
 		if err != nil {
-			log.Fatalf("Failed init store", err)
+			c.Logger.Fatalf("Failed init store", err)
 		}
 
 		c.Store = appStore
@@ -78,7 +79,7 @@ func MustContainer(cfg config.Config, defaultLogger logger.Logger) *Container {
 	c.SystemUsecase = systemUc.NewSystem(c.Config)
 	c.UsersUsecase = usersUc.NewUsers(c.Logger, c.Store.Users())
 
-	c.AppDispatcher = NewDispatcher(
+	c.AppDispatcher = dispatcherUc.NewDispatcher(
 		c.EventsDispatcher,
 		c.Logger,
 		c.AuthUsecase,

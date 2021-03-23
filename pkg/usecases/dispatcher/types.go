@@ -1,4 +1,4 @@
-package container
+package dispatcher
 
 import (
 	"github.com/GiDiS/jb-chat/pkg/events"

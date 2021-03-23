@@ -1,4 +1,4 @@
-package container
+package dispatcher
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 	"sync"
 )
 
+// Dispatcher Translate income events to requests to usecases and back
 type Dispatcher struct {
 	dispatcher events.Dispatcher
 	logger     logger.Logger

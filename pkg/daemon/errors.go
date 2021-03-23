@@ -4,4 +4,5 @@ const (
 	ErrOk = iota
 	ErrInitLoggerFailed
 	ErrInitHttpServeFailed
+	ErrInitInterruptsFailed
 )
