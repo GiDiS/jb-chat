@@ -74,9 +74,9 @@ func InWriteTransactionX(db *sqlx.DB, ctx context.Context, callback TxxFunction)
 		return
 	}
 
-	commited := false
+	committed := false
 	defer func() {
-		if !commited {
+		if !committed {
 			if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
 				retErr = newRollbackErr(err)
 			}
@@ -97,7 +97,7 @@ func InWriteTransactionX(db *sqlx.DB, ctx context.Context, callback TxxFunction)
 	if commitErr := tx.Commit(); commitErr != nil {
 		retErr = newCommitErr(commitErr)
 	} else {
-		commited = true
+		committed = true
 	}
 
 	return nil
