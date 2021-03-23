@@ -14,7 +14,6 @@ import (
 	sessionsUc "github.com/GiDiS/jb-chat/pkg/usecases/sessions"
 	systemUc "github.com/GiDiS/jb-chat/pkg/usecases/system"
 	usersUc "github.com/GiDiS/jb-chat/pkg/usecases/users"
-	"sync"
 )
 
 // Dispatcher Translate income events to requests to usecases and back
@@ -27,7 +26,6 @@ type Dispatcher struct {
 	sessionsUc sessionsUc.Sessions
 	systemUc   systemUc.System
 	usersUc    usersUc.Users
-	mx         sync.Mutex
 }
 
 func NewDispatcher(

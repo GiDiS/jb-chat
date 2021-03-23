@@ -40,7 +40,7 @@ func In(where []string, args []interface{}, field string, arg interface{}) ([]st
 	return where, args, nil
 }
 
-//InReadOnlyTransactionX runs callback in read transaction
+// InReadOnlyTransactionX runs callback in read transaction
 func InReadOnlyTransactionX(db *sqlx.DB, ctx context.Context, f TxxFunction) error {
 	tx, txErr := db.BeginTxx(ctx, &sql.TxOptions{
 		ReadOnly: true,
@@ -65,7 +65,7 @@ func InReadOnlyTransactionX(db *sqlx.DB, ctx context.Context, f TxxFunction) err
 	return nil
 }
 
-//InWriteTransactionX runs callback in write transaction
+// InWriteTransactionX runs callback in write transaction
 func InWriteTransactionX(db *sqlx.DB, ctx context.Context, callback TxxFunction) (retErr error) {
 
 	tx, txErr := db.BeginTxx(ctx, &sql.TxOptions{})

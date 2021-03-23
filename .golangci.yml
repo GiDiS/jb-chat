@@ -1,0 +1,31 @@
+run:
+  skip-files: []
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - errcheck
+    - exhaustive
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - nolintlint
+    - rowserrcheck
+    - exportloopref
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - unconvert
+    - varcheck
+

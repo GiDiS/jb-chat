@@ -45,5 +45,5 @@ func (c *channelsImpl) GetDirect(ctx context.Context, uid models.Uid, request Ch
 	}
 	direct.Title = to[0].Title
 	resp.SetChannel(&direct)
-	return
+	return resp, nil
 }

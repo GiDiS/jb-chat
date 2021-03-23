@@ -9,16 +9,10 @@ import (
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 type messagesPostgresStore struct {
-	db              *sqlx.DB
-	messages        map[models.MessageId]models.Message
-	channelMessages map[models.ChannelId]map[models.MessageId]bool
-	lastMsg         models.MessageId
-
-	rwMx sync.RWMutex
+	db *sqlx.DB
 }
 
 func NewMessagesPostgresStore(db *sqlx.DB) *messagesPostgresStore {

@@ -42,7 +42,9 @@ func (d *dispatcher) AddTransport(tr Transport, local bool) {
 	go func() {
 		if bus.sendChan != nil {
 			for e := range bus.sendChan {
-				d.Emit(e)
+				if err := d.Emit(e); err != nil {
+					d.logger.Errorf("emit error: %v", err)
+				}
 			}
 		}
 	}()
